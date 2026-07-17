@@ -4,7 +4,7 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 ## Current priority
 
-- Phase: T-103 DONE — Private GitHub baseline established; await Owner/Toby (no next task started)
+- Phase: T-104 DONE — Auth Owner manual verification passed; Hank narrow re-review `Approve`; await T-105 approval
 - Milestone: M1 foundation → M2 secure CRUD → M3 UX → M4 deploy/submit
 - Primary goal: 2026-07-18까지 배포 가능한 과제 1단계 완성
 
@@ -22,7 +22,7 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 | T-101 | Vite React foundation | DONE | Gini | Hank | dev build, 구조, `.gitignore`, `.env.example`, no secrets | No |
 | T-102 | Supabase schema·constraints·indexes migration 작성 | DONE | Hank | Any | 5 tables/관계/검증 조건, 재현 가능한 SQL | SQL 실행 Yes |
 | T-103 | RLS policy·security test plan | DONE | Hank | Any | 3 owner tables CRUD policies, cross-user 차단 계획 | SQL 실행 Yes |
-| T-104 | Supabase client + Auth | BACKLOG | Gini | Hank | sign-up/login/logout/session/error | Yes if project mutation |
+| T-104 | Supabase client + Auth | DONE | Gini | Hank | sign-up/login/logout/session/error | Yes if project mutation |
 | T-105 | Restaurant Read/Create | BACKLOG | Gini | Hank | own list states, name-only create | No |
 | T-106 | Restaurant Update/Delete | BACKLOG | Gini | Hank | edit, validation, confirm/cascade behavior | No |
 | T-107 | Visit editor | BACKLOG | Hank | Gini | visited fields/rating/revisit; unvisited nullable | No |
@@ -36,9 +36,9 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 ## Immediate next action
 
-1. Desktop에서 `https://github.com/tonykks/tastelog`을 clone해 동일한 baseline을 사용할 수 있습니다.
-2. Owner/Toby가 다음 stage 시작을 명시 승인하기 전까지 후속 task를 시작하지 않습니다.
-3. T-102/T-103 migration SQL은 작성·검토 완료 상태이며 Supabase 실제 실행은 Owner 승인 후에만 수행합니다 (D-010).
+1. T-104 완료 checkpoint를 Private GitHub `main`에 보존하고 새 Agent/다른 PC 인계 상태를 확인합니다.
+2. 다음 task는 T-105 Restaurant Read/Create이지만 Owner/Toby의 별도 승인 전 시작하지 않습니다.
+3. T-100~T-104를 재수행하거나 applied migration을 수정하지 않습니다.
 
 ## Known blockers / Owner inputs
 
@@ -47,7 +47,7 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 | B-006 | ~~Root empty `.git/` reappeared~~ — **RESOLVED 2026-07-15 (D-009)**: Owner+Toby chose `git init -b main` instead of repeated delete; local repo only, no commit/remote/push | T-101 |
 | B-005 | ~~Root empty `.git/`·`.agents/`~~ — **RESOLVED 2026-07-15**: reconfirmed empty + non-repo; Owner-approved delete by Gini; paths gone | T-101 |
 | B-001 | ~~GitHub repository name/URL 확정~~ — **RESOLVED 2026-07-17 (D-013)**: Private repository `https://github.com/tonykks/tastelog`; baseline branch `main` | T-113 |
-| B-002 | Supabase project URL와 publishable key를 local `.env`에 Owner가 입력 | T-104 |
+| B-002 | ~~Supabase URL·publishable key local 입력~~ — **RESOLVED 2026-07-17**: Owner가 `.env.local`에 직접 입력; Git ignore 확인; 값은 어디에도 미기록 | T-104 |
 | B-003 | Vercel project 연결 및 env 설정 승인 | T-113 |
 | B-004 | 최종 앱 이름과 visual theme 확정 | T-110/T-112 |
 
@@ -55,6 +55,7 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 | ID | Result | By | Verified | Date |
 |---|---|---|---|---|
+| T-104 | Supabase client/Auth DONE: signup+email confirm+login/logout+refresh session+safe login error verified; Hank final Approve | Gini | Owner + Hank | 2026-07-17 |
 | T-103 | RLS policy migration DONE: Any final Approve (no added findings); Owner/Toby closed; SQL not executed | Hank | Any + Owner/Toby | 2026-07-15 |
 | T-102 | Initial schema migration DONE: Any final Approve (findings 0); Owner/Toby closed; SQL not executed | Hank | Any + Owner/Toby | 2026-07-15 |
 | T-101 | Vite React foundation DONE: name=`tastelog`; local `git init -b main` (D-009); build/lint OK; no commit/remote | Gini | Hank | 2026-07-15 |

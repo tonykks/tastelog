@@ -84,6 +84,55 @@ T-103 is not started.
 
 ## Hank → Owner, Toby, Gini, Any
 
+- Date: 2026-07-17
+- Related task: T-104 / D-014 security hardening migration review
+- Status: Review complete
+
+### Final verdict
+
+**Approve**
+
+### Findings
+
+No blocking or non-blocking findings.
+
+### Review evidence
+
+1. `supabase/migrations/20260717000003_harden_set_updated_at_search_path.sql` is exactly one 70-byte SQL line with one statement and no BOM:
+
+   ```sql
+   alter function public.set_updated_at() set search_path = pg_catalog;
+   ```
+
+   It changes only the existing function's per-function `search_path`; it does not create, drop, or alter any table, schema, index, policy, constraint, trigger, grant, or function body.
+
+2. The existing definition is `public.set_updated_at()` with no arguments, returns `trigger`, and uses `language plpgsql`. The migration's empty argument list therefore identifies the correct function signature. `ALTER FUNCTION ... SET search_path = pg_catalog` is valid PostgreSQL syntax.
+
+3. The existing body only assigns `new.updated_at = now()` and returns `new`. `NEW` is the PL/pgSQL trigger record and `now()` is available from `pg_catalog`, so the fixed path does not break name resolution. `ALTER FUNCTION` changes an auxiliary function property without replacing the function object or body; the five existing `BEFORE UPDATE` triggers continue to reference and execute the same function.
+
+4. The remote pre-check recorded by Gini found no existing fixed function configuration. Setting `search_path` to the trusted `pg_catalog` schema directly addresses Supabase Security Advisor check `0011 function search path mutable`. After the approved migration is actually applied, rerun Security Advisor to confirm the WARN is cleared; that runtime confirmation is not part of this static review.
+
+5. Both already-applied migrations are unchanged in staged and unstaged Git diff, and their working-tree Git blobs exactly match `HEAD`:
+
+   - `20260715000001_initial_schema.sql`: SHA256 `5AAB6F902052D15A104D78A4DC1B3A8611E7BE227FF8B914CC0DC566869C7C85`
+   - `20260715000002_rls_policies.sql`: SHA256 `A948160A02E4C2CFFCCF17BECB75CB1FD1C2958431ADE16E5341D41E6824B9B0`
+
+6. The new migration contains no unnecessary schema, index, policy, performance-advisor, or other database changes. Its SHA256 is `BCAD57CD16E90C47B79B2321B9DEFF77AEDE0813EA7DCAA790ABCC49941F5FBC`.
+
+7. Gini's migration-history and dry-run evidence consistently records migrations 1 and 2 as local=remote and only `20260717000003_harden_set_updated_at_search_path.sql` as local pending. The actual `db push` was not executed. I did not repeat the linked dry-run or perform any remote operation in this review.
+
+8. The reviewed migration contains no password, token, key, connection string, `service_role`, destructive command, or data-changing DML. No secret or dangerous command was introduced or executed during this review.
+
+### Scope confirmation
+
+No code, SQL, shared project document, database, Auth implementation, Git state, or migration history was changed. This review records findings only in Hank's own chat file. Actual `supabase db push`, migration repair/reset, Advisor rerun, Auth work, and Git operations remain outside this review and require the existing Owner/Toby approval flow.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
 - Date: 2026-07-15
 - Related task: T-103 RLS policy and security test plan
 - Status: Planning complete — T-103 remains `IN_PROGRESS`
@@ -397,5 +446,96 @@ RLS-15 and RLS-16 are intentionally excluded per D-012 and Any's Low finding.
 T-103 is still a static artifact. Any should final-review `supabase/migrations/20260715000002_rls_policies.sql`. T-102/T-103 SQL execution remains blocked until final review and Owner-approved ordered execution.
 
 No package install, React/env edit, Git commit/push, deployment, Supabase connection, SQL execution, test execution, or T-104 work was performed.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-17
+- Related task: T-104 Supabase client + Auth independent review
+- Status: Review complete
+
+### Final verdict
+
+**Approve with changes**
+
+### Scope and passed checks
+
+- `src/lib/supabase.js` is the sole `createClient` call and creates one module-scoped browser client only when both `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` exist.
+- `.env.local` has only those two non-empty variable names, is ignored by both `.env.*` and `*.local`, is absent from Git status, and no environment file other than the empty-value `.env.example` is tracked. The local key is an `sb_publishable_` key; it and the URL appear in the production bundle as expected. No secret/service-role key, database password, token, or connection string was found in source or bundle.
+- Missing configuration renders variable *names only*; values are neither logged nor rendered. Raw Supabase errors are mapped to fixed Korean messages, and React text rendering safely escapes both those messages and `session.user?.email`.
+- `getSession` starts before the subscription but the subscription is registered synchronously before the login UI can render; `onAuthStateChange` also emits `INITIAL_SESSION`. The effect's active guard and cleanup unsubscribe the component listener correctly. Default browser `persistSession` behavior is compatible with refresh persistence.
+- Email-confirmation handling correctly uses the documented Supabase signal (`data.session === null` after sign-up). Password is controlled component state only and is not stored, logged, or rendered elsewhere. Submit/sign-out controls disable while requests are pending.
+- Labels, `htmlFor`, password/email autocomplete values, visible focus styles, alert/status messages, and disabled states are present. No T-105 feature or UI library was added.
+- `@supabase/supabase-js` is locked at `2.110.7`; package and lockfile are consistent. `npm run lint`, `npm run build` (Vite `8.1.4`), `npm ls`, and production-only `npm audit` all passed; audit reports 0 vulnerabilities.
+- Read-only `supabase migration list --linked` confirms 001, 002, and 003 are each local=remote. All three local SHA256 values match the previously recorded baselines; this Auth implementation did not alter migrations or the remote DB.
+
+### Findings
+
+#### 1. Initial-session errors are silently converted to the logged-out screen
+
+- Severity: Low
+- File/location: `src/App.jsx:93`
+- Cause: `getInitialSession()` returns a mapped safe `error`, but the promise handler destructures only `session` and discards it.
+- Impact: A storage/initialization failure can present as a normal logged-out state, giving the user no actionable explanation and obscuring a session-lifecycle failure.
+- Recommended change: Keep an initialization-error state; when `getInitialSession()` returns `error`, finish loading and render that existing safe Korean message with a retry/reload instruction. Do not render the raw error.
+
+#### 2. Logout uses Supabase's global default scope
+
+- Severity: Low
+- File/location: `src/services/authService.js:47`
+- Cause: `supabase.auth.signOut()` is called without options; Supabase's default scope is `global`.
+- Impact: One device's “로그아웃” invalidates all of the user's active sessions, which is surprising for a standard browser logout and broader than the UI communicates.
+- Recommended change: Call `supabase.auth.signOut({ scope: 'local' })` unless Owner/Toby explicitly intend a global all-devices logout; keep the UI wording aligned with that decision.
+
+#### 3. Declared tab roles lack the corresponding tab keyboard behavior
+
+- Severity: Low
+- File/location: `src/components/auth/AuthForm.jsx:64-85`
+- Cause: The buttons declare `role="tab"` inside a `tablist`, but have no `aria-controls`/tabpanel association or ArrowLeft/ArrowRight navigation and roving `tabIndex` handling.
+- Impact: Keyboard and assistive-technology users receive tab semantics that do not behave as expected.
+- Recommended change: Either implement the complete WAI-ARIA tabs pattern, or remove the tab/tablist roles and present these as ordinary mode-switch buttons (the simpler Phase 1 option).
+
+### Remaining verification boundary
+
+No test account or Auth request was made in this review. Owner's manual sign-up, confirmation-required, login failure, login success, refresh, and logout checks remain required before T-104 can move from `IN_PROGRESS` to `DONE`.
+
+No code, SQL, migration, database, common document, or Git commit/push was changed by Hank; this entry is findings only.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-17
+- Related task: T-104 Auth Low findings narrow re-review
+- Status: Review complete
+
+### Final verdict
+
+**Approve**
+
+### Re-review result
+
+All three previously accepted Low findings are resolved. No new findings in the requested narrow scope.
+
+1. `src/App.jsx`
+   - `getInitialSession()` now retains the mapped `error` in `initializationError`; it cannot silently fall through to the logged-out `AuthForm` screen.
+   - The error branch renders only the already-mapped Korean message, a Korean retry instruction, and an explicit `type="button"` reload action.
+   - It does not render raw Supabase errors, session data, or environment values. React renders the safe message as text.
+
+2. `src/services/authService.js`
+   - `signOut()` now calls `supabase.auth.signOut({ scope: 'local' })`, limiting the UI's logout action to the current browser session.
+   - `toSafeMessage()` and its fixed Korean-message mapping are unchanged; no raw error is returned for rendering.
+
+3. `src/components/auth/AuthForm.jsx`
+   - The incomplete `tablist`, `tab`, and `aria-selected` semantics are removed.
+   - Both mode controls remain native `button` elements with the correct boolean `aria-pressed` state and existing disabled behavior.
+   - No custom keyboard handler, `tabIndex`, or role overrides were introduced, so native Tab focus and Enter/Space button activation remain available; the existing visible `:focus-visible` style continues to apply.
+
+Per Toby's narrow-review instruction, I did not repeat lint/build, dependency audit, migration/hash/history checks, network commands, or Supabase CLI operations. No code, SQL, database, or common document was changed by Hank.
 
 — Hank

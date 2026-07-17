@@ -4,6 +4,386 @@
 
 ---
 
+## 2026-07-17 — Gini — T-104 final acceptance and checkpoint preparation
+
+### Goal
+
+Owner의 실제 Auth 검증 통과와 Hank narrow re-review `Approve`를 반영해 T-104를 종료하고, 새 창·다른 PC 인계용 GitHub checkpoint를 준비합니다.
+
+### Acceptance evidence
+
+- 회원가입 요청 및 실제 email confirmation mail 수신
+- Confirmation link 인증 성공
+- 인증 후 로그인 session 생성과 환영 화면 진입
+- 로그아웃 후 로그인 화면 복귀
+- 올바른 정보로 재로그인 성공
+- 새로고침 후 session 유지
+- 현재 browser session만 로그아웃 성공
+- 잘못된 비밀번호에 안전한 한국어 오류 표시
+- Hank narrow re-review 최종 `Approve` (blocking/non-blocking finding 없음)
+
+### Work performed
+
+1. `TASK_BOARD.md` T-104 → `DONE`, B-002 resolved 재확인
+2. D-015 T-104 종료/GitHub checkpoint Accepted 기록
+3. `docs/chat/gini-chat.md` 최종 종료 handoff 갱신
+4. `TOBY_HANDOFF_20260717.md` 신규 작성 (기존 20260715 handoff 보존)
+5. T-105는 시작하지 않음
+
+### Files changed
+
+- `TASK_BOARD.md`, `DECISION_LOG.md`, `WORK_LOG.md`
+- `docs/chat/gini-chat.md`
+- `TOBY_HANDOFF_20260717.md`
+- T-104 source/package/Supabase migration/config 및 Owner/Hank/Toby chat records는 checkpoint 포함 대상으로 검증
+
+### Validation
+
+최종 checkpoint 전 `git status`, `git diff --check`, lint, build, env ignore, secret scan, migration hashes, staged diff를 다시 검증합니다.
+
+### Findings/risks
+
+- 제출 기한은 2026-07-18이며 T-105~T-114가 남아 일정 위험이 높습니다.
+- Performance Advisor INFO는 승인 범위 밖으로 보류됩니다.
+
+### Next action
+
+검증 통과 시 승인된 commit/push를 수행하고 정지합니다. T-105는 별도 승인 전 시작하지 않습니다.
+
+### Handoff note
+
+T-104는 Owner+Hank 검증 근거로 DONE입니다. 다음 창은 `TOBY_HANDOFF_20260717.md`와 required reading order를 먼저 읽어야 합니다.
+
+---
+
+## 2026-07-17 — Gini — T-104 Hank review corrections
+
+### Goal
+
+Hank `Approve with changes`의 Low finding 3건만 Owner/Toby 승인 범위대로 수정합니다.
+
+### Work performed
+
+1. 초기 session 오류를 버리지 않고 `initializationError` state와 안전한 오류/새로고침 화면으로 연결
+2. 로그아웃 scope를 Supabase `local`로 제한
+3. 로그인/회원가입 전환의 불완전한 tab ARIA semantics 제거; 일반 button과 `aria-pressed` 사용
+4. 그 외 refactor·기능 추가 없음
+
+### Files changed
+
+- `src/App.jsx`
+- `src/services/authService.js`
+- `src/components/auth/AuthForm.jsx`
+- `WORK_LOG.md`, `docs/chat/gini-chat.md`, `TASK_BOARD.md`
+
+### Validation
+
+| Check | Result |
+|---|---|
+| IDE lints | none |
+| `npm run lint` | exit 0 |
+| `npm run build` | exit 0 (Vite 8.1.4) |
+| Dev smoke | `/` 200, root OK, `/src/main.jsx` 200; port 5173 closed afterward |
+| Secret scan | no service-role/secret key matches in `src` or `dist` |
+| `.env.local` | still ignored; unchanged |
+
+### Findings/risks
+
+- Blocker 없음.
+- 실제 Auth 요청과 session 오류 강제 재현은 test account 금지 및 Owner manual-test 경계로 남습니다.
+
+### Decisions needed
+
+- Hank narrow re-review of the three corrections
+- Owner manual Auth verification
+
+### Next action
+
+두 검증 전 T-104는 IN_PROGRESS 유지. T-105/Git/remote DB 작업 미착수.
+
+### Handoff note
+
+세 Low finding만 수정했고 lint/build/smoke가 통과했습니다.
+
+---
+
+## 2026-07-17 — Gini — T-104 Supabase client + Auth 구현
+
+### Goal
+
+Owner/Toby 승인에 따라 Supabase client와 email/password Auth(가입·로그인·로그아웃·session 유지·안전 오류 처리)를 구현합니다. Migration/remote DB는 변경하지 않습니다.
+
+### Work performed
+
+1. Preflight: `.env.local` 존재, 두 환경변수 non-empty(값 미출력), `.gitignore`의 `.env.*` rule로 ignore 확인, `git status`에 미노출
+2. `@supabase/supabase-js@2.110.7` dependency 설치
+3. `src/lib/supabase.js` — 단일 client 생성, 누락 env 이름 목록 export
+4. `src/services/authService.js` — signUp/signIn/signOut/getInitialSession/onAuthStateChange, 오류를 안전한 한국어 문장으로 변환
+5. `src/components/auth/AuthForm.jsx` — 로그인/회원가입 tab, label·focus·disabled/loading, email 확인 안내 상태
+6. `src/App.jsx` — env 오류 화면, session loading 화면, 로그인 전(AuthForm)/후(header+logout) 화면 분리, `onAuthStateChange` 구독
+7. `src/App.css` — plain CSS만 사용 (UI library 없음)
+8. `index.html` title `TasteLog`, `.env.example` 변수명을 `VITE_SUPABASE_PUBLISHABLE_KEY`로 갱신 (이름만)
+9. Test 계정 자동 생성, CRUD, migration 수정, Git commit/push, Vercel, T-105+ **미수행**
+
+### Files changed
+
+- Created: `src/lib/supabase.js`, `src/services/authService.js`, `src/components/auth/AuthForm.jsx`
+- Updated: `src/App.jsx`, `src/App.css`, `index.html`, `.env.example`, `package.json`, `package-lock.json`
+- Docs: `TASK_BOARD.md`, `WORK_LOG.md`, `docs/chat/gini-chat.md`
+
+### Validation
+
+| Check | Result |
+|---|---|
+| `npm run lint` | exit 0 (oxlint) |
+| `npm run build` | exit 0; Vite 8.1.4 |
+| Dev smoke | `http://127.0.0.1:5173/` HTTP 200, `#root` OK, `/src/main.jsx` 200; 서버 종료 |
+| `.env.local` Git 제외 | `git check-ignore` matched `.env.*`; `git status`에 없음 |
+| Secret scan (src) | `service_role`/`sb_secret` 없음 |
+| Secret scan (dist) | supabase-js 내부의 `sb_secret_` prefix 판별 문자열만 존재; 실제 key 없음 |
+| Env 값 노출 | 값·token을 어떤 출력/문서에도 기록하지 않음 |
+
+### Findings/risks
+
+- Session 유지·email 확인 흐름은 코드/문서 기준 구현이며, 실제 브라우저 가입·로그인은 Owner 확인 필요 (test 계정 자동 생성 금지 준수).
+- Supabase project의 email confirmation 설정에 따라 가입 직후 세션 발급 여부가 달라지며, 두 경우 모두 처리했습니다.
+
+### Decisions needed
+
+- Owner: dev server에서 실제 가입·로그인·로그아웃·새로고침 확인
+- Hank: T-104 Auth 구현 code review
+
+### Next action
+
+Owner 수동 확인과 Hank review 대기. T-104는 IN_PROGRESS 유지.
+
+### Handoff note
+
+Auth 구현은 lint/build/smoke까지 통과한 상태입니다. secret은 코드·번들·문서에 없으며 `.env.local`은 Git에서 제외됩니다. DONE 처리는 Owner 확인+Hank review 후에만 합니다.
+
+---
+
+## 2026-07-17 — Gini — D-014 actual push + Security Advisor recheck
+
+### Goal
+
+Hank `Approve` (no findings) 후 Owner/Toby 승인에 따라 `20260717000003`만 remote에 적용하고 search_path 고정과 Security Advisor WARN 해소를 검증합니다.
+
+### Work performed
+
+1. Preflight: hashes + migration list + dry-run → pending은 003만
+2. `supabase db push` — applied only `20260717000003_harden_set_updated_at_search_path.sql`
+3. Migration history: three migrations all local=remote
+4. Read-only: `proconfig = {search_path=pg_catalog}` on `public.set_updated_at()`
+5. `supabase db advisors --linked --type security` → no issues
+6. Did **not** change Performance Advisor items, Auth/env, Git, or later tasks
+
+### Files changed
+
+- `TASK_BOARD.md` — next action after hardening apply
+- `WORK_LOG.md` — this entry
+- `docs/chat/gini-chat.md` — push + advisor result
+- Migration SQL files: **not modified** during this push stage
+
+### Validation
+
+| Check | Result |
+|---|---|
+| Preflight pending | only 003 |
+| Push | 003 applied successfully |
+| History | 001/002/003 local=remote |
+| Function config | `search_path=pg_catalog` |
+| Security Advisor | No issues found |
+| Hashes | 001 `5AAB…C85`, 002 `A948…9B0`, 003 `BCAD…5FBC` unchanged |
+| Docker warning | local catalog cache fail only; remote OK |
+
+### Findings/risks
+
+- Transient `migration list` temp-role connect failure once; retry succeeded without password args or repair.
+- Performance Advisor INFO remains intentionally untouched.
+
+### Decisions needed
+
+- Owner/Toby: approve T-104 Auth/env stage when ready.
+
+### Next action
+
+Stop. Await Auth/env approval. Do not start client work without it.
+
+### Handoff note
+
+D-014 hardening is live on `tastelog-phase1`. Security Advisor WARN for mutable search_path is cleared. T-104 Auth remains blocked pending explicit approval.
+
+---
+
+## 2026-07-17 — Gini — `set_updated_at` search_path hardening dry-run
+
+### Goal
+
+기존 applied migration을 보존하면서 Security Advisor의 `public.set_updated_at search_path mutable` WARN을 forward migration으로 보정하고, 실제 push 없이 dry-run까지만 검증합니다.
+
+### Work performed
+
+1. Remote `pg_proc`를 읽기 전용 조회해 `public.set_updated_at()` 무인자 signature와 `trigger` 반환형, 미설정 `proconfig` 확인
+2. 기존 두 migration SHA256 baseline 일치 확인
+3. `20260717000003_harden_set_updated_at_search_path.sql` 생성
+4. D-014 Accepted 기록
+5. 새 migration이 지정된 `ALTER FUNCTION` 한 문장만 포함하는지 정적 검증
+6. Migration history에서 세 번째 migration만 local pending임을 확인
+7. `supabase db push --dry-run` 실행; 세 번째 migration 하나만 표시
+8. 실제 `db push` 미실행
+
+### Files changed
+
+- `supabase/migrations/20260717000003_harden_set_updated_at_search_path.sql` — 함수 `search_path` 보정만 포함
+- `DECISION_LOG.md` — D-014 Accepted
+- `TASK_BOARD.md` — review/push 승인 대기 상태
+- `WORK_LOG.md` — 본 기록
+- `docs/chat/gini-chat.md` — 계획과 결과
+- 기존 migration 두 개: **미수정·미rename**
+
+### Validation
+
+| Check | Result |
+|---|---|
+| Remote signature | `public.set_updated_at()` → `trigger` |
+| New migration SQL | `alter function public.set_updated_at() set search_path = pg_catalog;` only |
+| Migration history | 1·2 local=remote; 3 local-only |
+| Dry-run | only `20260717000003_harden_set_updated_at_search_path.sql` |
+| Existing SHA256 | `5AAB...C85`, `A948...9B0` — baseline unchanged |
+| Actual push | not executed |
+
+### Findings/risks
+
+- 보정 SQL은 함수 body나 trigger, table, policy, constraint, index를 변경하지 않습니다.
+- Performance Advisor INFO는 지시대로 변경하지 않았습니다.
+
+### Decisions needed
+
+- Hank: 새 forward migration 정적 review
+- Owner/Toby: Hank review 후 실제 `supabase db push` 승인 여부
+
+### Next action
+
+Review와 실제 push 승인을 기다립니다. 승인 전 remote 변경, Auth/env/client 작업을 시작하지 않습니다.
+
+### Handoff note
+
+세 번째 migration만 pending이며 dry-run이 예상 순서를 확인했습니다. 실제 push는 실행하지 않았습니다.
+
+---
+
+## 2026-07-17 — Gini — D-010 actual `db push` + read-only verify
+
+### Goal
+
+Owner/Toby-approved ordered remote apply of the two reviewed migrations on linked `tastelog-phase1`, then read-only verification. No Auth/env/client work.
+
+### Work performed
+
+1. Reconfirmed migration SHA256 vs baseline (unchanged)
+2. Ran `supabase db push` — applied `20260715000001_initial_schema.sql` then `20260715000002_rls_policies.sql`
+3. Confirmed `supabase migration list`: both local and remote populated
+4. Read-only checks: 5 public tables, RLS enabled on all, 16 policies, constraints, indexes
+5. Ran `supabase db advisors --linked --type all`
+6. Did **not** seed data, write `.env`, install `@supabase/supabase-js`, implement Auth, commit, or start T-105
+
+### Files changed
+
+- `TASK_BOARD.md` — next action after remote apply
+- `WORK_LOG.md` — this entry
+- `docs/chat/gini-chat.md` — push + verify handoff
+- Migration SQL files: **not modified**
+
+### Validation
+
+| Check | Result |
+|---|---|
+| Push order | schema then RLS; Finished successfully |
+| Migration history | remote `20260715000001`, `20260715000002` |
+| Tables | 5 expected public base tables |
+| RLS | enabled on all 5 |
+| Policies | 16 (profiles 3, places 1, user_restaurants 4, visits 4, menu_reviews 4) |
+| Constraints/indexes | present (owner uniques, FKs, checks, Phase 1 indexes) |
+| Security Advisor | WARN `set_updated_at` search_path mutable |
+| Performance Advisor | INFO unindexed `place_id` FK; unused indexes on empty DB |
+| Migration SHA256 | unchanged |
+| Docker warning | local catalog cache failed (no Docker Desktop); remote apply OK |
+
+### Findings/risks
+
+- Advisor WARN on `set_updated_at` is informational for Phase 1; no migration repair performed.
+- Unused-index INFO is expected before app traffic.
+
+### Decisions needed
+
+- Owner/Toby: approve T-104 Auth/env stage (B-002 `.env` + client).
+
+### Next action
+
+Stop and await next approval. Do not start Auth/env without explicit Owner/Toby go-ahead.
+
+### Handoff note
+
+Remote DB now has approved schema + RLS. T-104 remains IN_PROGRESS until Auth acceptance criteria are met under a new approval.
+
+---
+
+## 2026-07-17 — Gini — T-104 stage 1 (CLI · link · dry-run)
+
+### Goal
+
+Owner-approved T-104 stage 1: prepare Supabase CLI, link `tastelog-phase1`, verify migration history, run `db push --dry-run` only. Do not apply SQL.
+
+### Work performed
+
+1. Confirmed Git `main`/`origin/main` at baseline; recorded migration SHA256 hashes
+2. Installed project-scoped `supabase` CLI 2.109.1 as devDependency
+3. Ran `supabase init` (created `config.toml` / `.gitignore`; migrations unchanged)
+4. Owner completed `npx supabase login` in Cursor Terminal
+5. Linked project ref `xqgrunybnlblaqlzomkv`
+6. `supabase migration list`: both migrations local-only; remote empty
+7. `supabase db push --dry-run`: would push the two approved files in order
+8. Did **not** run actual `db push`
+
+### Files changed
+
+- `package.json`, `package-lock.json` — `supabase` devDependency
+- `supabase/config.toml`, `supabase/.gitignore` — CLI init
+- `TASK_BOARD.md` — T-104 IN_PROGRESS; stage 1 complete note
+- `WORK_LOG.md` — this entry
+- `docs/chat/gini-chat.md` — stage 1 result
+
+### Validation
+
+| Check | Result |
+|---|---|
+| CLI version | 2.109.1 |
+| Project | `tastelog-phase1` / `xqgrunybnlblaqlzomkv` ACTIVE_HEALTHY, linked |
+| Migration list | local `20260715000001`, `20260715000002`; remote blank |
+| Dry-run order | 1) `initial_schema` 2) `rls_policies` only |
+| Migration SHA256 | unchanged vs baseline |
+| Actual SQL apply | not executed |
+
+### Findings/risks
+
+- Remote DB has no migrations yet; first real push will create schema + RLS.
+- Secrets were not written to docs/chat/commands.
+
+### Decisions needed
+
+- Owner/Toby: approve actual `supabase db push` (D-010 ordered execution).
+
+### Next action
+
+Stop until Owner/Toby approve real `db push`. No Auth/.env/client work until that stage is assigned.
+
+### Handoff note
+
+T-104 stage 1 (prepare/link/dry-run) is complete and safe to hand off for push approval. Actual push, env, and Auth remain blocked.
+
+---
+
 ## 2026-07-17 — Gini — Private GitHub baseline
 
 ### Goal

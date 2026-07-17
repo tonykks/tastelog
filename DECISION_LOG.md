@@ -113,6 +113,30 @@ Status: `Proposed` · `Accepted` · `Rejected` · `Superseded` · `Deferred`
 - Reason: 노트북과 데스크탑에서 동일한 versioned 기준점을 clone하고 안전하게 작업을 이어가기 위함이다.
 - Consequence: D-009의 commit·remote·push 보류는 이 최초 Private GitHub 기준점 작업에 한해 해제된다. Supabase 연결·SQL 실행·배포·T-104는 별도 Owner 승인 전까지 계속 보류한다.
 
+## D-014: Harden `set_updated_at` with a forward migration
+
+- Date: 2026-07-17
+- Status: Accepted
+- Decided by: Owner + Toby
+- Related: T-104, D-010, Security Advisor
+- Decision: 이미 remote에 적용된 `20260715000001_initial_schema.sql`과 `20260715000002_rls_policies.sql`은 수정하거나 rename하지 않는다.
+- Decision: Security Advisor의 `function_search_path_mutable` WARN은 새 forward migration `20260717000003_harden_set_updated_at_search_path.sql`에서 `ALTER FUNCTION public.set_updated_at() SET search_path = pg_catalog;`만 적용해 해결한다.
+- Decision: Performance Advisor의 `place_id` 미인덱싱 및 unused index INFO는 이번 보정 범위에서 변경하지 않는다.
+- Reason: 적용된 migration history의 재현성을 보존하면서 함수의 이름 해석 경로를 고정해 보안 경고를 최소 변경으로 해소한다.
+- Consequence: 새 migration은 Hank review와 Owner/Toby의 실제 push 승인 전까지 local pending 상태로 유지한다.
+
+## D-015: Close T-104 and publish an Auth checkpoint
+
+- Date: 2026-07-17
+- Status: Accepted
+- Decided by: Owner + Toby
+- Related: T-104, D-013, D-014
+- Decision: Owner의 실제 회원가입·email confirmation·로그인·로그아웃·재로그인·새로고침 session 유지·잘못된 비밀번호 오류 확인과 Hank narrow re-review `Approve`를 근거로 T-104를 `DONE` 처리한다.
+- Decision: T-104 source, Supabase CLI/config 및 migration 003, 협업 기록, `TOBY_HANDOFF_20260717.md`를 commit `feat: complete T-104 Supabase authentication`으로 Private GitHub `main`에 push한다.
+- Decision: `.env.local`, secret, database password, service-role key, `node_modules/`, `dist/`, Supabase local temporary state는 checkpoint에서 제외한다.
+- Reason: 새 Agent 창과 다른 PC가 검증된 T-104 완료 상태에서 T-105를 안전하게 준비할 수 있도록 재현 가능한 Git 기준점을 만든다.
+- Consequence: T-100~T-104는 재수행하지 않는다. T-105는 Owner/Toby의 별도 시작 승인 전 자동 착수하지 않는다.
+
 ## Proposed decisions for Owner
 
 ### D-007: Final product name
