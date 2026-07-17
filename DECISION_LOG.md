@@ -136,6 +136,7 @@ Status: `Proposed` · `Accepted` · `Rejected` · `Superseded` · `Deferred`
 - Decision: `.env.local`, secret, database password, service-role key, `node_modules/`, `dist/`, Supabase local temporary state는 checkpoint에서 제외한다.
 - Reason: 새 Agent 창과 다른 PC가 검증된 T-104 완료 상태에서 T-105를 안전하게 준비할 수 있도록 재현 가능한 Git 기준점을 만든다.
 - Consequence: T-100~T-104는 재수행하지 않는다. T-105는 Owner/Toby의 별도 시작 승인 전 자동 착수하지 않는다.
+- Result: checkpoint commit `91f7b5d0047b5f716c85822682cbbcc2a0fc6582`가 `origin/main`에 push 완료됐고 local `main`과 동일하다.
 
 ## Proposed decisions for Owner
 

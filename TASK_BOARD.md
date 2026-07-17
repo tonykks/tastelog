@@ -36,7 +36,7 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 ## Immediate next action
 
-1. T-104 완료 checkpoint를 Private GitHub `main`에 보존하고 새 Agent/다른 PC 인계 상태를 확인합니다.
+1. T-104 checkpoint 완료: commit `91f7b5d0047b5f716c85822682cbbcc2a0fc6582`가 `origin/main`에 push됨. 새 Agent는 `TOBY_HANDOFF_20260717.md`부터 읽습니다.
 2. 다음 task는 T-105 Restaurant Read/Create이지만 Owner/Toby의 별도 승인 전 시작하지 않습니다.
 3. T-100~T-104를 재수행하거나 applied migration을 수정하지 않습니다.
 
@@ -56,8 +56,8 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 | ID | Result | By | Verified | Date |
 |---|---|---|---|---|
 | T-104 | Supabase client/Auth DONE: signup+email confirm+login/logout+refresh session+safe login error verified; Hank final Approve | Gini | Owner + Hank | 2026-07-17 |
-| T-103 | RLS policy migration DONE: Any final Approve (no added findings); Owner/Toby closed; SQL not executed | Hank | Any + Owner/Toby | 2026-07-15 |
-| T-102 | Initial schema migration DONE: Any final Approve (findings 0); Owner/Toby closed; SQL not executed | Hank | Any + Owner/Toby | 2026-07-15 |
+| T-103 | RLS policy migration DONE: Any final Approve (no added findings); Owner/Toby closed; SQL not executed at closeout (2026-07-17 Owner 승인으로 remote 적용됨) | Hank | Any + Owner/Toby | 2026-07-15 |
+| T-102 | Initial schema migration DONE: Any final Approve (findings 0); Owner/Toby closed; SQL not executed at closeout (2026-07-17 Owner 승인으로 remote 적용됨) | Hank | Any + Owner/Toby | 2026-07-15 |
 | T-101 | Vite React foundation DONE: name=`tastelog`; local `git init -b main` (D-009); build/lint OK; no commit/remote | Gini | Hank | 2026-07-15 |
 | T-100 | Root inventory: docs-only pack, no React/Git/secrets; T-101 merge scaffold plan in `gini-chat.md` | Gini | Hank pending | 2026-07-15 |
 | P-001 | 개발기획서 분석 및 Phase 1 협업문서 작성 | Toby | Owner pending | 2026-07-15 |

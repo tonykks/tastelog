@@ -10,7 +10,8 @@
 - GitHub: `https://github.com/tonykks/tastelog` (Private)
 - Branch: `main`
 - Checkpoint 직전 commit: `75bc9079bf02d47bf48d5c0bb7d0f890e093f89f` — `chore: establish TasteLog Phase 1 baseline`
-- 이번 checkpoint message: `feat: complete T-104 Supabase authentication`
+- Auth checkpoint commit: `91f7b5d0047b5f716c85822682cbbcc2a0fc6582` — `feat: complete T-104 Supabase authentication`
+- 이 checkpoint는 `origin/main`에 push 완료됐으며 local `main`과 동일합니다.
 - T-100~T-104: **DONE — 재수행 금지**
 - 다음 task: T-105 Restaurant Read/Create (자동 시작 금지; Owner/Toby 승인 필요)
 

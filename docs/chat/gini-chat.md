@@ -16,7 +16,8 @@
 ### Handoff
 
 - New-agent document: `TOBY_HANDOFF_20260717.md`
-- Git checkpoint: `feat: complete T-104 Supabase authentication` (Owner-approved commit/push after final checks)
+- Git checkpoint: commit `91f7b5d0047b5f716c85822682cbbcc2a0fc6582` — `feat: complete T-104 Supabase authentication`
+- Push complete: local `main` = `origin/main`; working tree clean
 - T-100~T-104 must not be rerun.
 - T-105 is next but must not start without Owner/Toby approval.
 

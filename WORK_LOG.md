@@ -4,11 +4,11 @@
 
 ---
 
-## 2026-07-17 — Gini — T-104 final acceptance and checkpoint preparation
+## 2026-07-17 — Gini — T-104 final acceptance and GitHub checkpoint
 
 ### Goal
 
-Owner의 실제 Auth 검증 통과와 Hank narrow re-review `Approve`를 반영해 T-104를 종료하고, 새 창·다른 PC 인계용 GitHub checkpoint를 준비합니다.
+Owner의 실제 Auth 검증 통과와 Hank narrow re-review `Approve`를 반영해 T-104를 종료하고, 새 창·다른 PC 인계용 GitHub checkpoint를 생성합니다.
 
 ### Acceptance evidence
 
@@ -28,18 +28,30 @@ Owner의 실제 Auth 검증 통과와 Hank narrow re-review `Approve`를 반영�
 2. D-015 T-104 종료/GitHub checkpoint Accepted 기록
 3. `docs/chat/gini-chat.md` 최종 종료 handoff 갱신
 4. `TOBY_HANDOFF_20260717.md` 신규 작성 (기존 20260715 handoff 보존)
-5. T-105는 시작하지 않음
+5. 검증 통과 후 승인된 checkpoint commit 생성 및 `origin/main` push
+6. T-105는 시작하지 않음
 
 ### Files changed
 
 - `TASK_BOARD.md`, `DECISION_LOG.md`, `WORK_LOG.md`
 - `docs/chat/gini-chat.md`
 - `TOBY_HANDOFF_20260717.md`
-- T-104 source/package/Supabase migration/config 및 Owner/Hank/Toby chat records는 checkpoint 포함 대상으로 검증
+- Checkpoint commit에 T-104 source/package, Supabase config/migration 003, 협업 chat/log 총 19개 file 포함
 
 ### Validation
 
-최종 checkpoint 전 `git status`, `git diff --check`, lint, build, env ignore, secret scan, migration hashes, staged diff를 다시 검증합니다.
+| Check | Result |
+|---|---|
+| `npm run lint` | 통과 (exit 0) |
+| `npm run build` | 통과 (Vite 8.1.4) |
+| `git diff --check` | 통과 |
+| `.env.local` | ignored; tracked/staged 아님 |
+| Staged secret scan | service-role/secret/password/connection string 없음; `.env.example` 값 비어 있음 |
+| Migration 001·002·003 hash | baseline과 동일 (미변경) |
+| Commit | `91f7b5d0047b5f716c85822682cbbcc2a0fc6582` — `feat: complete T-104 Supabase authentication` |
+| Push | `origin/main` 성공 (`75bc907..91f7b5d`) |
+| Sync | local `main` = `origin/main` |
+| Working tree | clean |
 
 ### Findings/risks
 
@@ -48,7 +60,7 @@ Owner의 실제 Auth 검증 통과와 Hank narrow re-review `Approve`를 반영�
 
 ### Next action
 
-검증 통과 시 승인된 commit/push를 수행하고 정지합니다. T-105는 별도 승인 전 시작하지 않습니다.
+T-105는 Owner/Toby 별도 승인 전 시작하지 않습니다.
 
 ### Handoff note
 
