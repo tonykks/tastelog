@@ -221,7 +221,7 @@ npm run preview
 ## 13. 링크
 
 - GitHub: https://github.com/tonykks/tastelog
-- Vercel: **배포 예정 — T-113** (가짜 URL 없음)
+- Vercel: **배포(https://tastelog-eight.vercel.app/))
 
 ## 프로젝트 기록
 
