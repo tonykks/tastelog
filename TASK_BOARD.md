@@ -4,7 +4,7 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 ## Current priority
 
-- Phase: T-107 DONE — Visit editor accepted by Owner/Toby; await explicit T-108 start approval
+- Phase: T-108 DONE — Menu review CRUD checkpoint; await explicit T-109 start approval
 - Milestone: M1 foundation → M2 secure CRUD → M3 UX → M4 deploy/submit
 - Primary goal: 2026-07-18까지 배포 가능한 과제 1단계 완성
 
@@ -26,7 +26,7 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 | T-105 | Restaurant Read/Create | DONE | Gini | Hank | own list states, name-only create | No |
 | T-106 | Restaurant Update/Delete | DONE | Gini | Hank | edit, validation, confirm/cascade behavior | No |
 | T-107 | Visit editor | DONE | Hank | Gini | visited fields/rating/revisit; unvisited nullable | No |
-| T-108 | Menu review CRUD | BACKLOG | Hank | Gini | multiple menus, price/rating validation | No |
+| T-108 | Menu review CRUD | DONE | Hank | Gini | multiple menus, price/rating validation | No |
 | T-109 | Search/filter/rating sort/dashboard | BACKLOG | Gini | Hank | keyword, status/revisit, ranking, summary | No |
 | T-110 | Responsive UI + accessibility/error states | BACKLOG | Gini | Hank | mobile/desktop, keyboard/labels, empty/error/loading | No |
 | T-111 | Integrated security/regression test | BACKLOG | Hank | Any | T1–T10 evidence incl. second account | Yes for test accounts |
@@ -36,9 +36,9 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 ## Immediate next action
 
-1. Wait for explicit Owner/Toby approval before starting T-108 Menu review CRUD.
-2. T-108 remains `BACKLOG` with Hank as Primary Implementer and Gini as Reviewer.
-3. Do not modify applied migration 001·002·003, packages, Auth, T-107 source, DB test data, Git, or Vercel while awaiting approval.
+1. Wait for explicit Owner/Toby approval before starting T-109 Search/filter/rating sort/dashboard.
+2. T-109 remains `BACKLOG` with Gini as Primary Implementer and Hank as Reviewer.
+3. Do not modify T-108 source, DB test data, migrations/packages, or Vercel while awaiting T-109 start approval.
 
 ## Known blockers / Owner inputs
 

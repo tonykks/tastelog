@@ -3,6 +3,90 @@
 ## Hank → Owner, Toby, Gini, Any
 
 - Date: 2026-07-18
+- Related task: T-108 final closeout
+- Status: **DONE — Owner/Toby final approval received**
+
+T-108 is closed with Gini final `Approve`, Owner's complete manual menu CRUD verification, and accepted lint/build/source-diff evidence. New menu rows keep `visit_id` null by omission; updates preserve any existing `visit_id` by excluding it from the payload.
+
+Full working-tree `git diff --check` passed during closeout; lint/build were not unnecessarily rerun.
+
+The two accepted Low findings—stale-abort `null` return contract and whitespace-only price UI/service interpretation—are non-blocking and may be revisited during T-110 or final cleanup.
+
+Final Owner data remains `산방밀면`, its existing representative visit, and one `밀면` menu review (`price=8500`, `taste_rating=4`, memo `담백하고 시원했습니다.`).
+
+T-109 remains `BACKLOG` with Gini as Primary Implementer and Hank as Reviewer. Hank will not start or review T-109 until Owner/Toby explicitly approves it. No source, DB, migration/package, Git, or Vercel operation was performed for this closeout.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-108 Menu review CRUD
+- Status: **REVIEW — implementation and static checks complete**
+
+### Reviewer handoff
+
+- Added owner+restaurant-scoped multi-menu CRUD in `menuReviewService`, with `id` added for update/delete and fixed Korean error mapping.
+- Added `MenuReviewForm` and `MenuReviewPanel`: loading/empty/error-retry, name-only create, optional integer price/rating, memo, inline edit/cancel/save, and menu-name delete confirmation.
+- Deterministic ordering is `updated_at` DESC → `id` DESC. Successful create/update/delete changes only the local menu list for the open Restaurant.
+- New rows omit `visit_id`; existing rows preserve any current `visit_id` because update payloads never include it. VisitEditor and representative-visit logic are untouched.
+- Panel mount/load/create and per-row mutation request guards isolate Restaurant switches, logout/user changes, unmounts, stale results, and different-row pending/errors.
+
+### Checks
+
+- lint: pass
+- production build: pass
+- T-108 scoped diff/trailing-whitespace: pass
+- full `git diff --check`: blocked only by pre-existing trailing spaces in Gini's own `docs/chat/gini-chat.md:54-61`; Hank did not edit it
+- owner-scope/visit-id/protected-path scans: pass
+- secret scan: no matches
+- migration/package/VisitEditor/visit service/T-109+: unchanged
+
+### Owner manual test — existing `산방밀면` only
+
+1. Open `메뉴 기록` for `산방밀면` and confirm the empty state.
+2. Add the first menu using only a menu name.
+3. Add a second menu with price, taste rating, and memo; duplicate names may remain separate.
+4. Refresh and confirm both menus persist in `updated_at` DESC → `id` DESC order.
+5. Edit the first menu: confirm cancel preserves values, then save changed values and verify only that row changes.
+6. Confirm price `-1`/`1.5` and taste rating `0`/`6`/`1.5` show Korean validation without a DB request or typed-value loss.
+7. Start deleting the second menu, cancel, and confirm it remains.
+8. Confirm deletion of the second menu and verify only the first menu remains.
+9. Refresh, then logout/relogin, and confirm the first menu persists.
+10. Confirm the Restaurant and existing representative visit/status/card summary are unchanged.
+
+### Review request
+
+Gini: review only T-108 owner scope, validation, nullable `visit_id` preservation, deterministic ordering/local updates, lifecycle guards, accessibility, and protected-scope compliance. T-108 must remain `REVIEW` until review and Owner verification complete.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-108 Menu review CRUD
+- Status: **IN_PROGRESS**
+
+### Implementation plan
+
+1. Add `menuReviewService` for owner+restaurant-scoped list/create/update/delete with service-level name, price, and taste-rating validation and fixed Korean errors.
+2. Add separate menu form/list/editor components with loading, empty, retry, create, edit/cancel, delete confirmation, per-row pending state, and accessible labels/actions.
+3. Use deterministic ordering `updated_at` DESC → `id` DESC`; successful mutations update only the selected restaurant's local menu state.
+4. New rows will omit `visit_id` so it remains null. Existing linked rows will preserve `visit_id` because updates modify only menu name, price, taste rating, and memo.
+5. Connect one menu editor at a time to the current Restaurant list and add mount/request-id guards for Restaurant changes, logout, user switch, and stale operations.
+6. Run local static checks, lint, production build, diff/secret/scope checks only. Gini reviews; Owner performs real DB verification with existing `산방밀면`.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
 - Related task: T-107 final closeout
 - Status: **DONE — Owner/Toby final approval received**
 

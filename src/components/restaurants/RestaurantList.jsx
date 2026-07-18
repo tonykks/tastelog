@@ -16,6 +16,7 @@ function RestaurantList({
   onUpdate,
   onDelete,
   onOpenVisit,
+  onOpenMenus,
   visitSummaries,
 }) {
   const [editingId, setEditingId] = useState(null)
@@ -190,6 +191,14 @@ function RestaurantList({
                 disabled={Boolean(pendingMutations[restaurant.id])}
               >
                 방문 기록
+              </button>
+              <button
+                className="restaurant-action secondary"
+                type="button"
+                onClick={() => onOpenMenus(restaurant.id)}
+                disabled={Boolean(pendingMutations[restaurant.id])}
+              >
+                메뉴 기록
               </button>
               <button
                 className="restaurant-action delete"

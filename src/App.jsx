@@ -4,6 +4,7 @@ import { getInitialSession, onAuthStateChange, signOut } from './services/authSe
 import AuthForm from './components/auth/AuthForm'
 import RestaurantForm from './components/restaurants/RestaurantForm'
 import RestaurantList from './components/restaurants/RestaurantList'
+import MenuReviewPanel from './components/menus/MenuReviewPanel'
 import VisitEditor from './components/visits/VisitEditor'
 import {
   createRestaurant,
@@ -85,6 +86,7 @@ function SignedInScreen({ session }) {
   const nextMutationRequestIdRef = useRef(0)
   const [pendingMutations, setPendingMutations] = useState({})
   const [activeVisitRestaurantId, setActiveVisitRestaurantId] = useState(null)
+  const [activeMenuRestaurantId, setActiveMenuRestaurantId] = useState(null)
   const [visitSummaries, setVisitSummaries] = useState({})
 
   useEffect(() => {
@@ -211,6 +213,7 @@ function SignedInScreen({ session }) {
       return remainingSummaries
     })
     if (activeVisitRestaurantId === deletedRestaurantId) setActiveVisitRestaurantId(null)
+    if (activeMenuRestaurantId === deletedRestaurantId) setActiveMenuRestaurantId(null)
     return null
   }
 
@@ -236,6 +239,19 @@ function SignedInScreen({ session }) {
   const activeVisitRestaurant = restaurants.find(
     (restaurant) => restaurant.id === activeVisitRestaurantId,
   )
+  const activeMenuRestaurant = restaurants.find(
+    (restaurant) => restaurant.id === activeMenuRestaurantId,
+  )
+
+  function handleOpenVisit(restaurantId) {
+    setActiveMenuRestaurantId(null)
+    setActiveVisitRestaurantId(restaurantId)
+  }
+
+  function handleOpenMenus(restaurantId) {
+    setActiveVisitRestaurantId(null)
+    setActiveMenuRestaurantId(restaurantId)
+  }
 
   async function handleSignOut() {
     setSigningOut(true)
@@ -278,7 +294,8 @@ function SignedInScreen({ session }) {
           pendingMutations={pendingMutations}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
-          onOpenVisit={setActiveVisitRestaurantId}
+          onOpenVisit={handleOpenVisit}
+          onOpenMenus={handleOpenMenus}
           visitSummaries={visitSummaries}
         />
         {activeVisitRestaurant && (
@@ -287,6 +304,14 @@ function SignedInScreen({ session }) {
             userId={userId}
             onSaved={handleVisitSaved}
             onCancel={() => setActiveVisitRestaurantId(null)}
+          />
+        )}
+        {activeMenuRestaurant && (
+          <MenuReviewPanel
+            key={activeMenuRestaurant.id}
+            restaurant={activeMenuRestaurant}
+            userId={userId}
+            onClose={() => setActiveMenuRestaurantId(null)}
           />
         )}
         {errorMessage && (

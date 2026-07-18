@@ -4,6 +4,99 @@
 
 ---
 
+## 2026-07-18 — Gini — T-108 GitHub checkpoint
+
+### Goal
+
+Owner/Toby-approved T-108 Menu review CRUD source and collaboration records committed and pushed to Private GitHub `main`. T-109 not started.
+
+### Scope included
+
+- Source: `menuReviewService.js`, `MenuReviewForm.jsx`, `MenuReviewPanel.jsx`, `App.jsx`, `App.css`, `RestaurantList.jsx`
+- Docs: `TASK_BOARD.md`, `WORK_LOG.md`, `docs/chat/gini-chat.md`, `docs/chat/hank-chat.md`, `docs/chat/toby-chat.md`
+- Excluded: `.env.local`, `dist/`, `node_modules/`, secrets, migrations 001·002·003, packages, VisitEditor/visitService
+
+### Next action
+
+T-108 `DONE`; T-109 `BACKLOG` pending explicit start approval.
+
+— Gini
+
+---
+
+## 2026-07-18 — Hank — T-108 final closeout
+
+### Final acceptance
+
+- Owner/Toby final approval received after Hank implementation and Gini independent review final `Approve`. No Medium/High findings remain.
+- Two Low findings are accepted as non-blocking: the stale-abort `null` return contract and the whitespace-only price interpretation difference between UI and service. Neither causes current acceptance failure or data loss; revisit in T-110/final cleanup if needed.
+- New menu INSERTs omit `visit_id`, leaving it null. Existing linked rows preserve `visit_id` because UPDATE payloads exclude it.
+- Owner verified empty state, two menu Creates, refresh persistence, `updated_at` DESC → `id` DESC ordering, edit cancel/save, price and taste validation, field/row isolation, delete cancel/confirm, refresh/logout/relogin persistence, and no Restaurant/Visit/card-summary regression.
+- Accepted automated evidence: lint pass, production build pass, T-108 source diff check pass. Full `git diff --check` also passed during closeout after Gini chat whitespace cleanup.
+
+### Final Owner test data
+
+- Restaurant: `산방밀면`
+- Visit: existing representative visit preserved
+- Menu review: one `밀면` row remains
+  - `price`: `8500`
+  - `taste_rating`: `4`
+  - `memo`: `담백하고 시원했습니다.`
+
+### Scope / next action
+
+T-108 is `DONE`; T-109 remains `BACKLOG` pending explicit Owner/Toby approval. This closeout changes documents only and performs no source, DB, migration/package, Git, or Vercel mutation.
+
+— Hank
+
+---
+
+## 2026-07-18 — Hank — T-108 Menu review CRUD
+
+### Goal and scope
+
+로그인 사용자가 선택한 자신의 Restaurant 안에서 여러 menu review를 등록·조회·수정·삭제하도록 구현했습니다. Menu CRUD만 포함하며 T-109+ 검색/dashboard와 T-110 RatingStars는 포함하지 않습니다.
+
+### Implementation
+
+- `menuReviewService`는 모든 SELECT/UPDATE/DELETE를 `user_id + restaurant_id`로 제한하고, UPDATE/DELETE는 추가로 menu `id`를 제한합니다. 0-row 결과도 성공으로 처리하지 않으며 raw Supabase 오류는 고정 한국어 메시지로 변환합니다.
+- 메뉴 정렬은 `updated_at` DESC → `id` DESC입니다. Create는 반환 행만 추가, Update는 반환된 정확한 행만 교체, Delete는 반환된 id만 제거해 전체 목록을 재조회하지 않습니다.
+- UI와 service 모두 `menu_name` trim/non-empty, price 빈 값 또는 0 이상 정수, taste rating 빈 값 또는 정수 1–5를 DB 요청 전에 검증합니다. Server error가 발생해도 입력값을 유지합니다.
+- 식당별 패널은 loading, empty, safe error/retry, create, inline edit/save/cancel, menu-name delete confirmation/cancel/confirm을 구분합니다. Create와 각 menu row mutation은 별도 pending/request id로 관리합니다.
+- Session user keyed remount, panel key, mount flag, load/create/per-row mutation request ids로 logout, user switch, panel unmount, Restaurant 전환, stale result가 현재 UI를 덮어쓰지 못하게 했습니다.
+
+### Phase 1 `visit_id` boundary
+
+- 새 menu review INSERT는 `visit_id`를 전송하지 않아 nullable default인 null을 사용합니다. 대표 visit을 추론하거나 자동 연결하지 않습니다.
+- 기존 row SELECT에는 `visit_id`가 포함되지만 UPDATE payload는 `menu_name`, `price`, `taste_rating`, `memo`만 포함하므로 기존 `visit_id`를 덮어쓰거나 해제하지 않습니다.
+- VisitEditor와 T-107 대표 방문 결정·status 저장 로직은 변경하지 않았습니다.
+
+### Files
+
+- Created: `src/services/menuReviewService.js`
+- Created: `src/components/menus/MenuReviewForm.jsx`, `src/components/menus/MenuReviewPanel.jsx`
+- Updated: `src/App.jsx`, `src/components/restaurants/RestaurantList.jsx`, `src/App.css`
+- Records: `TASK_BOARD.md`, `WORK_LOG.md`, `docs/chat/hank-chat.md`
+
+### Validation
+
+- `npm.cmd run lint`: pass (`oxlint`)
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- T-108 scoped diff/trailing-whitespace check: pass
+- Full working-tree `git diff --check`: nonzero only because pre-existing `docs/chat/gini-chat.md:54-61` contains trailing spaces; Hank did not modify another Agent's chat file
+- Owner filters / `visit_id` payload boundary / T-109+ path scan: pass
+- Secret scan in T-108 paths: no matches
+- Migration 001·002·003, package files, VisitEditor, visit service: no diff
+- Actual Supabase menu CRUD: not run by design; Owner verification required
+
+### Next action
+
+T-108 is `REVIEW`, not DONE. Gini reviews source; Owner follows the manual test sequence in Hank chat. T-109+, DB mutation by agents, Git commit/push, and Vercel remain unstarted.
+
+— Hank
+
+---
+
 ## 2026-07-18 — Hank — T-107 final closeout
 
 ### Final acceptance

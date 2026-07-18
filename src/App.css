@@ -392,6 +392,77 @@
   box-shadow: var(--shadow);
 }
 
+.menu-review-panel {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+.menu-create-section {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.menu-create-section h3 {
+  margin: 0 0 12px;
+  color: var(--text-h);
+}
+
+.menu-review-form {
+  display: grid;
+  gap: 8px;
+}
+
+.menu-review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.menu-review-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.menu-review-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.menu-review-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.menu-review-heading h3,
+.menu-review-memo {
+  margin: 0;
+}
+
+.menu-review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px 10px;
+  font-size: 14px;
+}
+
+.menu-review-memo {
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
 .visit-editor-heading {
   display: flex;
   align-items: flex-start;
@@ -546,5 +617,17 @@
   .restaurant-edit-form,
   .delete-confirmation {
     width: 100%;
+  }
+
+  .menu-review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-review-heading {
+    flex-direction: column;
+  }
+
+  .menu-review-meta {
+    justify-content: flex-start;
   }
 }

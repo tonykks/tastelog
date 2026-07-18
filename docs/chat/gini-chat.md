@@ -3,8 +3,181 @@
 ## Gini → Owner, Toby, Hank, Any
 
 - Date: 2026-07-18
+- Related: T-108 Menu review CRUD GitHub checkpoint
+- Status: **T-108 DONE — checkpoint commit/push in progress per Owner/Toby approval**
+- Primary: Hank · Reviewer: Gini
+
+### Checkpoint
+
+- Message: `feat: complete menu review CRUD`
+- Includes approved T-108 source (`menuReviewService`, `MenuReviewForm`, `MenuReviewPanel`, `App.jsx`/`App.css`, `RestaurantList`) and collaboration docs.
+- Excludes `.env.local`, `dist/`, `node_modules/`, secrets; migrations 001·002·003, packages, VisitEditor/visitService unchanged.
+- T-109 remains `BACKLOG` and is not started. No Vercel/DB mutation.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-108 Menu review CRUD independent review
+- Status: **Approve — superseded by checkpoint above; T-108 later closed DONE after Owner verification**
+- Primary: Hank · Reviewer: Gini
+- Review model: **Auto** (Cursor Agent; Composer-powered)
+- Baseline HEAD: `be38dc344e1b5aeed5433fbfb145855c80b8c573` (working-tree T-108 changes uncommitted)
+
+### 1. Final verdict
+
+**Approve**
+
+No Medium/High findings. Owner may proceed with the 10-step manual verification on existing `산방밀면`. Source was not edited by Gini.
+
+### 2. Passed items
+
+- Owner scope: SELECT/INSERT/UPDATE/DELETE all filter with `user_id` + `restaurant_id`; UPDATE/DELETE also require `id`; session `userId` from `session.user.id`; no `service_role` / RLS bypass in client
+- Create omits `visit_id` (DB null); UPDATE payload is only `menu_name` / `price` / `taste_rating` / `memo` — existing `visit_id` preserved; no representative-visit inference
+- `VisitEditor` / `visitService` / migrations 001·002·003 / `package.json` / `package-lock.json` have empty diffs
+- UI + service dual validation: trim `menu_name`; blank name blocked pre-DB; price empty→null, integer ≥0; taste empty→null, integer 1–5; memo nullable; no silent duplicate-name merge
+- Read order: DB and local `updated_at` DESC → `id` DESC; mutations update only the open restaurant’s local list
+- Panel-only loading / empty / safe Korean error+retry; menu load failure does not set App `restaurantError` or hide Restaurant list
+- Price `null` omitted vs `0` → `0원`; taste_rating shown only when non-null
+- Delete confirm includes exact `menu_name`; cancel does not call service; delete scopes id+user+restaurant; local row-only removal
+- Lifecycle: panel `key={restaurant.id}`; load/create/mutation request ids; per-row pending/error; pending disables duplicate submit; visit/menu panels mutually exclusive; restaurant delete clears active menu panel
+- a11y: labels/`htmlFor`, explicit `type`, pending disable, edit save/cancel, delete visual class, inherited `focus-visible` on `.restaurant-action` / `.restaurant-input`; number inputs only (no star UI / T-110)
+- T-109 search/filter/dashboard absent; secrets not introduced
+
+### 3. Findings
+
+None at Medium/High.
+
+#### Finding 1 — Form treats stale-abort `null` like success (non-blocking)
+
+- Severity: **Low**
+- Location: `MenuReviewPanel.handleCreate` / `handleUpdate` early `return null` + `MenuReviewForm.handleSubmit` falsy-as-success
+- Actual risk: If a request id were invalidated while the same mounted form remained visible, the form would clear/exit edit as success and `creating` might stay true. Current App `key={session.user.id}` / `key={activeMenuRestaurant.id}` and load-error vs create UI exclusion make this path unlikely.
+- Minimal fix (optional): return a distinct sentinel (e.g. `{ aborted: true }`) and skip form success side effects; always clear pending in `finally`. Not required before Owner manual test.
+
+#### Finding 2 — Whitespace-only price UI vs service (non-blocking)
+
+- Severity: **Low**
+- Location: `MenuReviewForm.validateValues` vs `normalizeOptionalInteger` in `menuReviewService.js`
+- Actual risk: price `"   "` passes UI (`Number("   ") === 0`) but service trims to `null`. No invalid DB write; minor UX inconsistency only.
+- Minimal fix (optional): trim price/taste strings in UI validation before `Number`, or treat whitespace-only as empty.
+
+### 4. visit_id verification
+
+- Create INSERT fields: normalized menu fields + `user_id` + `restaurant_id` only — `visit_id` not sent → null allowed
+- Update `.update(normalized.values)` never includes `visit_id`
+- SELECT lists `visit_id` for read only; UI does not edit or infer it from representative visit
+- Visit editor/service/representative rule files unchanged in working tree
+
+### 5. Owner scope · validation · stale guard
+
+- Scope and validation: pass (see §2)
+- Stale guards: pass for logout/user switch/restaurant switch/unmount via remount keys + request-id checks; menu load errors isolated to panel
+- Residual Low: §3 Finding 1 return-contract smell only
+
+### 6. Hank lint/build and git diff --check
+
+- Re-ran `npm.cmd run lint`: pass (oxlint)
+- Re-ran `npm.cmd run build`: pass (Vite 8.1.4)
+- Accept Hank’s reported checks; Gini reconfirm matches diff
+- Full `git diff --check` previously failed only on trailing spaces in this file’s older checklist lines — those formatting spaces were cleaned in this chat update. Source/T-108 paths had no trailing-whitespace hits in the earlier scoped check Hank reported.
+
+### 7. Owner manual test (10 steps) sufficiency
+
+**Sufficient** for T-108 acceptance and submission scenario T5, using existing `산방밀면` only: empty→create×2 (name-only + full fields), refresh order, edit cancel/save, invalid price/rating, delete cancel/confirm, refresh + logout/relogin persistence, restaurant/visit card unchanged. Cross-account RLS remains T-111 — correctly out of this task.
+
+### 8. Out-of-scope unchanged
+
+- T-100~T-107 not re-audited beyond T-108 touchpoints (`App.jsx` menu open wiring, `RestaurantList` menu button, CSS)
+- No T-109 search/filter/dashboard
+- No migration/schema/RLS/package changes
+- No Agent DB mutation, Supabase CLI, Git commit/push, or Vercel observed
+- T-108 left **REVIEW**; not marked DONE
+
+### 9. Review model
+
+**Auto** (Cursor Agent; Composer-powered)
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: New-window handoff read — T-107 closed / T-108 readiness (no implementation)
+- Status: **Superseded by T-108 review above — historical handoff read**
+- Role this window: T-108 Reviewer (Primary Implementer remains Hank)
+- Review model: **Auto** (Cursor Agent; Composer-powered)
+
+### Read premises
+
+AGENTS.md required order: `PROJECT_CONTEXT.md`, `PHASE1_REQUIREMENTS.md`, `DATABASE_AND_RLS.md`, `AGENT_ROLES.md`, `WORKFLOW.md`, `TASK_BOARD.md`, `DECISION_LOG.md`, `WORK_LOG.md` (latest), `TEST_AND_SUBMISSION.md`, `CHAT_PROTOCOL.md`, all current `docs/chat/*.md`. Did **not** use `TOBY_HANDOFF_20260718.md` (pre–T-107 handoff). Did not change source, docs (except this chat), DB, or Git.
+
+### 1. Git · task consistency
+
+**Match.** Local verify: `main` HEAD `be38dc344e1b5aeed5433fbfb145855c80b8c573` (`feat: complete visit editor`), `local main = origin/main`, working tree clean. Repo `https://github.com/tonykks/tastelog`.
+
+| Item | Owner baseline | Docs / Git |
+|---|---|---|
+| T-100~T-107 | DONE | `TASK_BOARD` Active backlog + Current priority; Hank chat top closeout |
+| T-108 | BACKLOG, Hank Primary / Gini Reviewer | Same; Immediate next = wait explicit start approval |
+| T-109+ | Not started | Same |
+
+**Non-blocking doc lag:** `toby-chat.md` top still holds completed T-107 checkpoint instructions (prior HEAD `f921d3d`). Prior Gini top said checkpoint *in progress* while Git already clean. `TASK_BOARD` Recently completed table still omits a T-107 row (Active backlog already shows DONE). Judgment priority: Owner baseline + `TASK_BOARD` / `WORK_LOG` / Hank top over stale chat tops.
+
+### 2. T-108 scope vs T-109 boundary
+
+**T-108 — Menu review CRUD** (Hank implements, Gini reviews)
+
+- Multiple menu rows per restaurant
+- `menu_name` required; `price` NULL or integer ≥ 0; `taste_rating` NULL or 1–5; memo optional
+- Add / edit / delete, owner-scoped (RLS + service)
+- Invalid numerics blocked with clear UX
+- DB: `menu_reviews` (+ optional `visit_id` per D-010/D-011 `ON DELETE SET NULL`)
+- Submission evidence: **T5**
+
+**Keep out of T-108 / leave for T-109 (Gini Primary):** keyword search, status/revisit filter, rating sort, dashboard totals / Top 5. Do not conflate with T-110 responsive/a11y sweep.
+
+**Boundary one-liner:** T-108 = menu CRUD + validation + persistence only.
+
+### 3. Blockers · contradictions
+
+| Kind | Note |
+|---|---|
+| T-108 blocker | **None** — only explicit Owner/Toby start approval |
+| Open Owner inputs | B-003 Vercel (T-113); B-004 name/theme (T-110/T-112) — not T-108 |
+| Standing constraints | No edit/rename/repair/reset of migrations 001·002·003; no DB mutation / push / Vercel / Agent test data without approval |
+| Design contradiction | None found |
+| Role alignment | Matches D-004 and `AGENT_ROLES` |
+
+### 4. T-108 Reviewer checklist (Gini)
+
+1. Acceptance: multi-menu, required name, price/rating rules, add/edit/delete, invalid-input UX
+2. Ownership: never trust client `user_id`; restaurant (+ optional visit) ownership; RLS + composite FK (D-010/D-011)
+3. Visit boundary: optional `visit_id` only; no damage to T-107 representative rule / VisitEditor / status path
+4. Service separation: DB behind menu review service, not scattered in presentation
+5. UX safety: loading/empty/error distinct; no raw/DB/secret leakage; delete confirm; cancel = no change
+6. Regression: Restaurant CRUD, Visit editor, Auth/session/refresh persistence
+7. Protected scope: no migration/package/Auth/T-109+ search·dashboard, no Agent DB test data, no unapproved push/deploy
+8. Evidence: lint / build / `git diff --check`, Owner manual path (≥ T5), `WORK_LOG` / `TASK_BOARD` alignment
+
+### Needed decision
+
+Owner/Toby: explicit approval before Hank starts T-108. Gini will not implement T-108 and will not start T-109.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
 - Related: T-107 Visit editor GitHub checkpoint
-- Status: **T-107 DONE — checkpoint commit/push in progress per Owner/Toby approval**
+- Status: **T-107 DONE — checkpoint commit/push completed** (`be38dc3` / `feat: complete visit editor`; superseded by handoff read above)
 - Primary: Hank · Reviewer: Gini
 
 ### Checkpoint
