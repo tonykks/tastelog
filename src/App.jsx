@@ -4,12 +4,14 @@ import { getInitialSession, onAuthStateChange, signOut } from './services/authSe
 import AuthForm from './components/auth/AuthForm'
 import RestaurantForm from './components/restaurants/RestaurantForm'
 import RestaurantList from './components/restaurants/RestaurantList'
+import VisitEditor from './components/visits/VisitEditor'
 import {
   createRestaurant,
   deleteRestaurant,
   getRestaurants,
   updateRestaurant,
 } from './services/restaurantService'
+import { getRepresentativeVisitSummaries } from './services/visitService'
 import './App.css'
 
 function sortRestaurantsByUpdatedAt(restaurants) {
@@ -82,6 +84,8 @@ function SignedInScreen({ session }) {
   const mutationRequestIdsRef = useRef(new Map())
   const nextMutationRequestIdRef = useRef(0)
   const [pendingMutations, setPendingMutations] = useState({})
+  const [activeVisitRestaurantId, setActiveVisitRestaurantId] = useState(null)
+  const [visitSummaries, setVisitSummaries] = useState({})
 
   useEffect(() => {
     isMountedRef.current = true
@@ -102,8 +106,23 @@ function SignedInScreen({ session }) {
     const { restaurants: nextRestaurants, error } = await getRestaurants(userId)
     if (!isMountedRef.current || requestId !== listRequestIdRef.current) return
 
+    if (error) {
+      setRestaurants(nextRestaurants)
+      setVisitSummaries({})
+      setRestaurantError(error)
+      setRestaurantsLoading(false)
+      return
+    }
+
+    const summaryResult = await getRepresentativeVisitSummaries({
+      userId,
+      restaurantIds: nextRestaurants.map((restaurant) => restaurant.id),
+    })
+    if (!isMountedRef.current || requestId !== listRequestIdRef.current) return
+
     setRestaurants(nextRestaurants)
-    setRestaurantError(error)
+    setVisitSummaries(summaryResult.error ? {} : summaryResult.visitsByRestaurantId)
+    setRestaurantError(null)
     setRestaurantsLoading(false)
   }, [userId])
 
@@ -187,8 +206,36 @@ function SignedInScreen({ session }) {
     setRestaurants((currentRestaurants) =>
       currentRestaurants.filter((restaurant) => restaurant.id !== deletedRestaurantId),
     )
+    setVisitSummaries((currentSummaries) => {
+      const { [deletedRestaurantId]: _deletedSummary, ...remainingSummaries } = currentSummaries
+      return remainingSummaries
+    })
+    if (activeVisitRestaurantId === deletedRestaurantId) setActiveVisitRestaurantId(null)
     return null
   }
+
+  function handleVisitSaved(updatedRestaurant, representativeVisit) {
+    setRestaurants((currentRestaurants) =>
+      sortRestaurantsByUpdatedAt(
+        currentRestaurants.map((restaurant) =>
+          restaurant.id === updatedRestaurant.id ? { ...restaurant, ...updatedRestaurant } : restaurant,
+        ),
+      ),
+    )
+    setVisitSummaries((currentSummaries) => {
+      if (updatedRestaurant.status === 'visited' && representativeVisit) {
+        return { ...currentSummaries, [updatedRestaurant.id]: representativeVisit }
+      }
+
+      const { [updatedRestaurant.id]: _hiddenSummary, ...remainingSummaries } = currentSummaries
+      return remainingSummaries
+    })
+    setActiveVisitRestaurantId(null)
+  }
+
+  const activeVisitRestaurant = restaurants.find(
+    (restaurant) => restaurant.id === activeVisitRestaurantId,
+  )
 
   async function handleSignOut() {
     setSigningOut(true)
@@ -231,7 +278,17 @@ function SignedInScreen({ session }) {
           pendingMutations={pendingMutations}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
+          onOpenVisit={setActiveVisitRestaurantId}
+          visitSummaries={visitSummaries}
         />
+        {activeVisitRestaurant && (
+          <VisitEditor
+            restaurant={activeVisitRestaurant}
+            userId={userId}
+            onSaved={handleVisitSaved}
+            onCancel={() => setActiveVisitRestaurantId(null)}
+          />
+        )}
         {errorMessage && (
           <p className="auth-message error" role="alert">
             {errorMessage}

@@ -2,6 +2,124 @@
 
 ## Hank → Owner, Toby, Gini, Any
 
+- Date: 2026-07-18
+- Related task: T-107 final closeout
+- Status: **DONE — Owner/Toby final approval received**
+
+T-107 is closed with Gini final `Approve`, Owner's full manual verification, and accepted lint/build/diff evidence. The deterministic representative rule remains `visited_at` DESC nulls last → `updated_at` DESC → `id` DESC. The final card summary is `방문함 · 대표 별점 4 · 다시 갈 의향 있음`.
+
+T-108 remains `BACKLOG` with Hank as Primary Implementer and Gini as Reviewer. Hank will not start T-108 until Owner/Toby explicitly approves it. No source, DB, migration/package, Git, or Vercel operation was performed for this document-only closeout.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-107 card-summary copy correction
+- Status: **REVIEW — copy correction complete**
+
+- Card label changed from `재방문 있음/없음` to `다시 갈 의향 있음/없음`.
+- The rendered boolean remains the existing `revisit_intention`; DB field, service, save/read behavior, and representative-visit logic are unchanged.
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- `git diff --check`: pass
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-107 card-summary error isolation
+- Status: **REVIEW — correction complete; awaiting Gini narrow re-review**
+
+### Correction
+
+- `src/App.jsx` now treats Restaurant SELECT and representative-summary SELECT errors separately.
+- Restaurant failure still uses the existing blocking `restaurantError` and retry screen.
+- Summary-only failure clears `visitSummaries` and explicitly keeps `restaurantError` null, so only rating/revisit labels disappear; loaded Restaurant cards and CRUD controls remain available.
+- No summary error or raw Supabase detail is rendered or logged.
+
+### Verification
+
+- Static summary-failure/list-success path: pass
+- Static Restaurant-failure/error-retry path: pass
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- `git diff --check`: pass
+- Out-of-scope path scan: no migration/package/T-108+ changes
+- T-107 remains `REVIEW`; all prohibited scopes remain unchanged
+
+Gini: please narrow re-review only this summary-error isolation path.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-107 card representative summary acceptance gap
+- Status: **REVIEW — correction complete; awaiting Gini narrow re-review**
+
+### Owner verification received
+
+Owner confirmed all six T-107 manual flows: visit create/read/update and refresh persistence, rating validation/cancel preservation, visited/unvisited transitions, historical visit preservation while unvisited, representative restoration when revisited, and logout/relogin persistence.
+
+### Card-summary correction
+
+- A visited card now shows `대표 별점 N` when the representative visit has a rating, plus `재방문 있음/없음`.
+- After a successful editor save, `VisitEditor` passes the returned visit to `App`; only that restaurant's local summary map entry is updated, without refetching the list.
+- On initial load/refresh, `getRepresentativeVisitSummaries()` queries only the current owner and loaded restaurant ids, applies the existing `visited_at` → `updated_at` → `id` descending rule, and selects the first visit per restaurant.
+- Cards with `status === 'unvisited'` never render the preserved historical summary. Existing list request-id, mount, and user-key guards cover the added summary request.
+
+### Checks
+
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- `git diff --check`: pass
+- Static visited-render/unvisited-hide flow: pass
+- Migration/package/T-108+/DB data/Git push/Vercel: unchanged
+
+Gini: please narrow re-review only the card-summary owner query, deterministic representative selection, local post-save update, refresh behavior, and unvisited visibility guard.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-107 Medium finding correction
+- Status: **REVIEW — correction complete; awaiting Gini narrow re-review**
+
+### Correction summary
+
+- If a successful visit INSERT/UPDATE is followed by a restaurant status failure, `saveVisitState()` now returns the written `visit` together with the existing safe Korean error instead of discarding it.
+- On that error path, `VisitEditor` stores `result.visit` as `representativeVisit` before displaying the error and keeps the editor open.
+- The next submit therefore passes the preserved `representativeVisit.id`; `visitService` selects its UPDATE branch and retains the existing `id + user_id + restaurant_id` scope rather than issuing another INSERT.
+- T-107 remains `REVIEW`. RPC/transaction/rollback/delete, migrations/schema/RLS, packages, Restaurant CRUD/Auth, T-108+, DB test data, Git push, and Vercel were not changed.
+
+### Verification
+
+- Narrow static review: corrected service return and editor error paths confirmed
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- Correction-scoped diff/trailing-whitespace checks: pass
+- Full working-tree `git diff --check`: the correction is clean, but the command remains nonzero because Gini's pre-existing `docs/chat/gini-chat.md:65-70` contains trailing spaces; Hank did not edit another Agent's chat file
+- Migration/package/T-108+ protected scope: unchanged
+
+Gini: please perform a narrow re-review of only this Medium finding correction.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
 - Date: 2026-07-15
 - Related task: T-102
 - Status: Implementation complete — awaiting Any review
@@ -77,6 +195,47 @@ No SQL was executed. No Supabase connection, CLI/package install, React source e
 Any should independently review `supabase/migrations/20260715_001_initial_schema.sql`.
 
 T-103 is not started.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-107 Visit editor
+- Status: **REVIEW — implementation and static checks complete**
+
+### Reviewer handoff
+
+- Added `src/services/visitService.js` and `src/components/visits/VisitEditor.jsx`; connected the existing authenticated restaurant list through one `방문 기록` action per row.
+- The Phase 1 UI edits one deterministic representative visit: newest non-null `visited_at`, then `updated_at`, then `id`, all descending. `unvisited` retains historical visit rows but ignores them until the restaurant is marked visited again.
+- The editor supports visited/unvisited, date, optional integer 1–5 overall rating, visit note, revisit intention/note, loading, safe query-error retry, validation, pending save, and cancel. It uses owner `user_id` + `restaurant_id` filters; existing RLS and composite FK are unchanged.
+- The visit editor has its own mount/load/save request guards, while the parent keeps the existing keyed-session guard. Late query/save results cannot update an unmounted or newly authenticated user's UI.
+- T-108 menu data/UI, search/dashboard, migration/RLS/package/Auth changes, restaurant CRUD redesign, database test data, Git commit/push, and deployment were not performed.
+
+### Checks
+
+- `npm.cmd run lint` — pass
+- `npm.cmd run build` — pass
+- `git diff --check` — pass
+- migration 001·002·003 and package files — unchanged
+- changed visit paths contain no service-role/secret matches
+
+### Owner manual test — existing `산방밀면` only
+
+1. Log in and click `방문 기록` for `산방밀면`; confirm the no-visit/unvisited explanation appears.
+2. Select `방문함`, enter a date, rating `5`, visit note, enable revisit, enter revisit note, and save. Confirm the card changes to `방문함` and the editor closes.
+3. Reopen it; confirm the saved fields persist. Change rating/note, save, refresh, and reopen to confirm persistence and the updated value.
+4. Enter `0`, `6`, or `1.5` as rating and confirm the fixed Korean validation error; cancel without saving and reopen to confirm the persisted value was unchanged.
+5. Select `미방문`, save, refresh, and confirm the card shows `미방문` and the empty explanation. Select `방문함` again and confirm the earlier representative visit values are available for editing.
+6. Log out/relogin and confirm the existing user data persists. Do not create any additional account or row for this task.
+
+### Known boundary
+
+The browser client saves a visit followed by its restaurant status; this cannot be one atomic transaction without an out-of-scope approved RPC. If status update fails after a visit write, the app presents a safe error and retry targets the deterministic representative visit. No automatic rollback or deletion is attempted.
+
+Gini review and Owner manual persistence verification are required before T-107 can close.
 
 — Hank
 
@@ -649,5 +808,23 @@ Per Toby's efficiency limits, I did not rerun lint/build/dev smoke/audit or use 
 `src/components/restaurants/RestaurantList.jsx:163-182` now renders the card-level `수정` trigger only when `editingId !== restaurant.id`. Thus the edited card retains only the inline form's `저장`/`취소` editing controls plus its intentionally separate `삭제` path; pressing delete still clears edit state before confirmation. A non-editing card, including every other row, retains its normal `수정` trigger and `beginEdit(restaurant)` path. No finding-external behavior or T-107 scope was added.
 
 Per Toby's instruction, I did not repeat lint/build/smoke/audit or perform Supabase CLI, network, DB, source/common-document/status, or Git work. T-107 was not started.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-107 Visit editor
+- Status: **IN_PROGRESS**
+
+### Implementation plan
+
+1. Add `visitService` for owner-scoped representative-visit read, create/update, and restaurant visit-status update; map all database failures to fixed Korean messages.
+2. Use one representative visit per restaurant in the Phase 1 UI. The deterministic selection rule will be: newest non-null `visited_at`, then `updated_at`, then `id`, each descending; an `unvisited` restaurant keeps historical visit rows but the UI ignores them until it is marked visited again.
+3. Add a separate `VisitEditor` with visited/unvisited control, date, nullable 1–5 rating, note, revisit intention/note, local validation, cancel/pending/empty states.
+4. Connect the editor to the existing authenticated screen without changing restaurant CRUD, migrations/RLS/packages/Auth, menu features, or dashboard features. Reuse keyed-session, mount, and request-id guards for visit requests/mutations.
+5. Run only local static checks, lint, build, and `git diff --check`; Gini reviews source and Owner manually verifies the existing `산방밀면` record.
 
 — Hank

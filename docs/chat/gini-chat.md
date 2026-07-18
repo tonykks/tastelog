@@ -3,6 +3,254 @@
 ## Gini → Owner, Toby, Hank, Any
 
 - Date: 2026-07-18
+- Related: T-107 Visit editor GitHub checkpoint
+- Status: **T-107 DONE — checkpoint commit/push in progress per Owner/Toby approval**
+- Primary: Hank · Reviewer: Gini
+
+### Checkpoint
+
+- Message: `feat: complete visit editor`
+- Includes approved T-107 source (`visitService`, `VisitEditor`, `App.jsx`/`App.css`, `RestaurantList`) and collaboration docs.
+- Excludes `.env.local`, `dist/`, `node_modules/`, secrets; migrations 001·002·003 and package files unchanged.
+- T-108 remains `BACKLOG` and is not started. No Vercel/DB mutation.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-107 card-summary error isolation narrow re-review
+- Status: **REVIEW maintained — narrow re-review complete**
+- Primary: Hank · Reviewer: Gini
+- Review model: **Auto** (Cursor Agent; Composer-powered)
+
+### 1. Final verdict
+
+**Approve**
+
+### 2. Two error-path results
+
+**Restaurant list failure** (`getRestaurants` error): still sets `restaurantError`, clears `visitSummaries`, stops before summary fetch, and keeps the existing full-list error/retry UI.
+
+**List success + summary-only failure**: after restaurants load, `setVisitSummaries({})` when `summaryResult.error` is set, and `setRestaurantError(null)` explicitly. Summary failure is not assigned to `restaurantError` and is not rendered; `toSafeVisitMessage` remains the only service-side mapping (unused on this UI path for summary fail).
+
+### 3. Restaurant list remains visible — basis
+
+With `restaurantError === null` and `restaurants` populated, `RestaurantList` skips the blocking error branch and renders cards plus edit / visit / delete controls. Missing `visitSummaries[id]` only omits rating/revisit labels (`status === 'visited' && visitSummaries[id]` guard).
+
+### 4. Hank lint/build/diff-check
+
+Accepted as reported for this correction: lint pass, build pass (Vite 8.1.4), `git diff --check` pass. Narrow re-review did not re-run full lint/build; migration/`package.json`/`package-lock.json` working-tree diff empty.
+
+### 5. Out-of-scope unchanged
+
+- Success summary path still uses ordered batch query + first-per-restaurant map when `summaryResult.error` is falsy; representative rule not altered in this fix
+- `VisitEditor` save / `handleVisitSaved` local summary update path unchanged by this isolation change
+- No migration · package · T-108+ · Agent DB data · Git push · Vercel
+- Source not edited by Gini; T-107 left `REVIEW`; no commit/push
+
+### 6. Review model
+
+**Auto** (Cursor Agent; Composer-powered)
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-107 card representative summary narrow re-review
+- Status: **REVIEW maintained — narrow re-review complete**
+- Primary: Hank · Reviewer: Gini
+- Review model: **Auto** (Cursor Agent; Composer-powered)
+
+### 1. Final verdict
+
+**Approve with changes**
+
+### 2. Passed items
+
+- `getRepresentativeVisitSummaries({ userId, restaurantIds })` scopes with `.eq('user_id', userId)` and `.in('restaurant_id', restaurantIds)`; empty id list short-circuits; other users’ visits cannot enter the map (plus existing RLS).
+- Representative rule unchanged and applied to the batch query: `visited_at` desc nulls last → `updated_at` desc → `id` desc; first row per `restaurant_id` kept.
+- Successful `VisitEditor` save calls `onSaved(restaurant, visit)`; `handleVisitSaved` merges only that restaurant’s status/updated_at and updates only that id in `visitSummaries` (or removes it when unvisited) — no full restaurant list refetch.
+- Editor mount/save request-id guards still gate `onSaved`; parent keyed-session remount clears summaries with the screen.
+- Visited cards show `대표 별점 N` only when `overall_rating !== null`, always show `재방문 있음/없음`; `status !== 'visited'` never renders the summary block (historical visit map entries stay hidden).
+- No rating-star input UI (T-110), no menu/search/dashboard, no migration/package changes in diff.
+
+### 3. Finding
+
+#### Finding 1 — Summary fetch failure hides the whole restaurant list
+
+- Severity: **Medium**
+- Location: `src/App.jsx` `loadRestaurants` (~lines 117–126) + `RestaurantList` error branch
+- Actual risk: After a successful restaurant SELECT, if `getRepresentativeVisitSummaries` fails, code still `setRestaurants(nextRestaurants)` but also `setRestaurantError(summaryResult.error)`. `RestaurantList` treats any `errorMessage` as a full-list error screen, so the already-loaded restaurants (and CRUD) disappear behind retry UI. This conflicts with the stated “summary failure must not damage the restaurant list” acceptance.
+- Minimal fix: On summary-only failure, keep `restaurants`, set `visitSummaries` to `{}` (or leave prior), leave `restaurantError` null (optional non-blocking summary notice later). Do not map summary errors onto the list-blocking `restaurantError` path. No migration/RPC needed.
+
+### 4. Post-save vs refresh summary
+
+- Post-save: local map update for the saved restaurant only; visited+visit writes summary; unvisited deletes that key — verified in `handleVisitSaved` / `VisitEditor`.
+- Refresh: after list load, summaries reload with the same `listRequestIdRef` + mount guards before applying state — verified. Residual gap is Finding 1 (summary error handling).
+
+### 5. Unvisited hide
+
+- Render guard is `restaurant.status === 'visited' && visitSummaries[restaurant.id]`. Unvisited cards never show rating/revisit labels even if a historical visit remains in DB/map until removed on unvisited save.
+
+### 6. lint / build / diff-check acceptance
+
+- Accept Hank’s reported `npm.cmd run lint` pass, `npm.cmd run build` pass, and correction-scoped `git diff --check` pass for this card-summary work.
+- Narrow re-review did not re-run full lint/build; migration/`package.json`/`package-lock.json` working-tree diff remains empty.
+
+### 7. Out-of-scope unchanged
+
+- T-108+ / menu / search / dashboard: not present in this correction
+- migration · schema · RLS · package: unchanged
+- No Agent DB test-data mutation, Git push, or Vercel observed
+- Source not edited by Gini; T-107 left `REVIEW`; no commit/push
+
+### 8. Review model
+
+**Auto** (Cursor Agent; Composer-powered)
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-107 Medium finding narrow re-review
+- Status: **REVIEW maintained — narrow re-review complete**
+- Primary: Hank · Reviewer: Gini
+- Review model: **Auto** (Cursor Agent; Composer-powered)
+
+### Final verdict
+
+**Approve**
+
+### Path 1 — `src/services/visitService.js`
+
+- After successful visit INSERT/UPDATE, if `updateRestaurantVisitStatus` fails, the service returns `{ visit, restaurant: null, error: statusResult.error }` (line 81), preserving the written visit object.
+- `statusResult.error` originates from `toSafeVisitMessage`; raw Supabase errors are not returned to the UI.
+
+### Path 2 — `src/components/visits/VisitEditor.jsx`
+
+- On `result.error`, if `result.visit` exists, `setRepresentativeVisit(result.visit)` runs before `setErrorMessage` (lines 78–81).
+- `onSaved` is not called on that path, so the editor stays open with the safe error visible.
+- Next submit uses `visitId: visited ? representativeVisit?.id : null`, so a preserved id drives UPDATE filtered by `id` + `user_id` + `restaurant_id` rather than a second INSERT.
+
+### Retry UPDATE guarantee
+
+Partial-success → returned visit id stored in `representativeVisit` → subsequent save with `visited === true` passes that id into `saveVisitState` → `visitId` branch runs `.update(...).eq('id', visitId).eq('user_id', userId).eq('restaurant_id', restaurantId)`.
+
+### Scope
+
+- No RPC, transaction, rollback, or automatic deletion added.
+- `git diff` against migrations/`package.json`/`package-lock.json`: unchanged.
+- No evidence of T-108+, Agent DB test-data mutation, Git push, or Vercel in this correction path.
+- Source not modified by Gini; only trailing whitespace removed from this chat file’s Owner-test list lines; T-107 left `REVIEW`.
+
+### `git diff --check`
+
+- Pass after removing trailing whitespace on this file’s Owner-test list lines (Gini chat only; source untouched).
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-107 Visit editor independent review
+- Status: **REVIEW maintained — verdict below**
+- Primary: Hank · Reviewer: Gini
+- Review model: **Auto** (Cursor Agent; Composer-powered)
+
+### Working-tree preflight (read-only)
+
+- HEAD: `f921d3df6ea768823a521488c629108339db1540` (prior docs handoff; not re-pushed)
+- Uncommitted Hank work present: `visitService.js`, `VisitEditor.jsx`, `App.jsx`, `App.css`, `RestaurantList.jsx`, plus `TASK_BOARD.md` / `WORK_LOG.md` / `hank-chat.md`
+- T-107 = `REVIEW` on board; T-100~T-106 remain DONE
+- No reset/checkout/restore; Hank changes preserved; no commit/push; no source edits by Gini
+
+### 1. Final verdict
+
+**Approve with changes**
+
+### 2. Passed checks
+
+- Owner-scoped `visits` SELECT/INSERT/UPDATE and `user_restaurants.status` UPDATE filter on both `user_id` and `restaurant_id`
+- Phase 1 single representative visit UI matches D-005; no menu-review / search / dashboard / restaurant CRUD redesign
+- Rating service invariant: empty → null; otherwise integer 1–5 only; safe Korean message; raw Supabase errors not exposed
+- Unvisited save updates status only and does **not** delete historical visit rows; returning to visited restores representative values
+- VisitEditor mount + load/save request-id guards; parent keeps keyed `session.user.id` remount
+- Labels, `type="button"|"submit"`, pending disable, focus-visible CSS present
+- Diff scope has no migration/package/Auth redesign; T-108+ UI absent; no Agent DB test-data mutation observed in review
+
+### 3. Findings
+
+#### Finding 1 — First-time visit INSERT then status failure can duplicate on retry
+
+- Severity: **Medium**
+- Location: `src/services/visitService.js` (`saveVisitState` after successful visit write); `src/components/visits/VisitEditor.jsx` (`handleSubmit` error path)
+- Actual risk: Visit write and status write are non-atomic (accepted boundary). On **first** save (`visitId == null`), if INSERT succeeds and status UPDATE fails, the service returns `{ visit: null, error }` and the editor keeps `representativeVisit == null`. Retry submits another INSERT → duplicate `visits` rows for the same restaurant. Hank’s stated “retry targets the deterministic representative visit” is not met on this path.
+- Minimal fix:
+  1. After a successful visit write, if status fails, still return the written `visit` with the safe error: `{ visit, restaurant: null, error }`
+  2. In the editor error path, if `result.visit` is present, `setRepresentativeVisit(result.visit)` before showing the error so the next save UPDATEs that id
+  3. Do not add RPC/migration/rollback for Phase 1
+
+### 4. Representative-visit rule verification
+
+Documented and implemented consistently:
+
+1. `visited_at` descending with nulls last (`nullsFirst: false`)
+2. then `updated_at` descending
+3. then `id` descending
+4. `limit(1)` / `maybeSingle()`
+
+Matches Hank work log / chat and is deterministic for Phase 1 UI.
+
+### 5. Non-atomic visit + restaurant status
+
+- Acceptable for Phase 1 **with Finding 1 fixed** (or explicitly Owner-accepted residual risk if deferred).
+- No hidden rollback/delete on status failure — correct.
+- Unvisited path only touches `user_restaurants.status` — correct and history-preserving.
+
+### 6. Owner manual test 6 steps — sufficiency
+
+Hank’s `산방밀면`-only six steps are sufficient for acceptance **after** Finding 1 is fixed or accepted:
+
+1. Open visit / empty unvisited copy
+2. Save visited + fields → card `방문함`
+3. Reopen / edit / refresh persistence
+4. Invalid ratings `0`/`6`/`1.5` → Korean validation; cancel keeps prior
+5. Unvisited save → card + empty copy; revisit visited restores representative
+6. Logout/relogin persistence
+
+Optional stress (not required to block): force/network-fail the status write after first visit INSERT and confirm retry does not create a second visit.
+
+### 7. Out-of-scope confirmation
+
+- T-108+ not implemented in this diff
+- migration 001·002·003 / package not in changed set
+- No Git commit/push performed by Gini; no Vercel
+- No Agent-created test rows as part of this review
+
+### 8. Requested next action
+
+- Hank: apply the minimal Finding 1 fix (or Owner/Toby explicitly defer with recorded residual risk)
+- Keep T-107 `REVIEW` until narrow re-review + Owner manual steps
+- Do not DONE, commit, or start T-108 without approval
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
 - Related: T-107 handoff document / docs checkpoint
 - Status: **Handoff written — no source or task-status change; T-107 remains BACKLOG**
 - Next Primary: Hank (T-107 Visit editor) · Reviewer: Gini

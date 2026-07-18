@@ -4,7 +4,7 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 ## Current priority
 
-- Phase: T-105·T-106 DONE — Restaurant CRUD checkpoint approved for GitHub push; next Primary Implementer Hank starts T-107 Visit editor
+- Phase: T-107 DONE — Visit editor accepted by Owner/Toby; await explicit T-108 start approval
 - Milestone: M1 foundation → M2 secure CRUD → M3 UX → M4 deploy/submit
 - Primary goal: 2026-07-18까지 배포 가능한 과제 1단계 완성
 
@@ -25,7 +25,7 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 | T-104 | Supabase client + Auth | DONE | Gini | Hank | sign-up/login/logout/session/error | Yes if project mutation |
 | T-105 | Restaurant Read/Create | DONE | Gini | Hank | own list states, name-only create | No |
 | T-106 | Restaurant Update/Delete | DONE | Gini | Hank | edit, validation, confirm/cascade behavior | No |
-| T-107 | Visit editor | BACKLOG | Hank | Gini | visited fields/rating/revisit; unvisited nullable | No |
+| T-107 | Visit editor | DONE | Hank | Gini | visited fields/rating/revisit; unvisited nullable | No |
 | T-108 | Menu review CRUD | BACKLOG | Hank | Gini | multiple menus, price/rating validation | No |
 | T-109 | Search/filter/rating sort/dashboard | BACKLOG | Gini | Hank | keyword, status/revisit, ranking, summary | No |
 | T-110 | Responsive UI + accessibility/error states | BACKLOG | Gini | Hank | mobile/desktop, keyboard/labels, empty/error/loading | No |
@@ -36,9 +36,9 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 ## Immediate next action
 
-1. T-105·T-106 Restaurant CRUD checkpoint commit `feat: complete restaurant CRUD`를 `origin/main`에 push한 뒤 Hank가 T-107 Visit editor를 시작합니다.
-2. T-105·T-106은 Owner 수동 검증과 Hank final `Approve` 근거로 DONE입니다. T-107은 BACKLOG이며 자동 시작하지 않습니다.
-3. Applied migration 001·002·003과 Auth checkpoint를 재수행하거나 수정하지 않습니다.
+1. Wait for explicit Owner/Toby approval before starting T-108 Menu review CRUD.
+2. T-108 remains `BACKLOG` with Hank as Primary Implementer and Gini as Reviewer.
+3. Do not modify applied migration 001·002·003, packages, Auth, T-107 source, DB test data, Git, or Vercel while awaiting approval.
 
 ## Known blockers / Owner inputs
 

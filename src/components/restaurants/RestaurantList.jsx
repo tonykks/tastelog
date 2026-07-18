@@ -15,6 +15,8 @@ function RestaurantList({
   pendingMutations,
   onUpdate,
   onDelete,
+  onOpenVisit,
+  visitSummaries,
 }) {
   const [editingId, setEditingId] = useState(null)
   const [editingName, setEditingName] = useState('')
@@ -157,6 +159,16 @@ function RestaurantList({
             <span className="restaurant-status">
               {restaurant.status === 'visited' ? '방문함' : '미방문'}
             </span>
+            {restaurant.status === 'visited' && visitSummaries[restaurant.id] && (
+              <div className="restaurant-visit-summary">
+                {visitSummaries[restaurant.id].overall_rating !== null && (
+                  <span>대표 별점 {visitSummaries[restaurant.id].overall_rating}</span>
+                )}
+                <span>
+                  다시 갈 의향 {visitSummaries[restaurant.id].revisit_intention ? '있음' : '없음'}
+                </span>
+              </div>
+            )}
             <time className="restaurant-updated" dateTime={restaurant.updated_at}>
               최근 수정 {formatUpdatedAt(restaurant.updated_at)}
             </time>
@@ -171,6 +183,14 @@ function RestaurantList({
                   수정
                 </button>
               )}
+              <button
+                className="restaurant-action secondary"
+                type="button"
+                onClick={() => onOpenVisit(restaurant.id)}
+                disabled={Boolean(pendingMutations[restaurant.id])}
+              >
+                방문 기록
+              </button>
               <button
                 className="restaurant-action delete"
                 type="button"

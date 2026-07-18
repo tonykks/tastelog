@@ -4,6 +4,26 @@
 
 ---
 
+## 2026-07-18 — Hank — T-107 final closeout
+
+### Final acceptance
+
+- Owner/Toby final approval received after Hank implementation, Gini independent review, and all narrow correction re-reviews reached final `Approve`.
+- Representative visit rule is deterministic: `visited_at` descending with nulls last → `updated_at` descending → `id` descending.
+- Gini Medium findings were resolved: a successful first visit write is retained when status update fails so retry UPDATEs the same visit id; summary-only query failure no longer hides the successful Restaurant list.
+- Owner verified empty unvisited state, visit INSERT/read/UPDATE/refresh persistence, rating `0`/`6`/`1.5` validation, cancel preservation, visited/unvisited transitions, historical visit preservation, representative restoration, logout/relogin persistence, and card-summary refresh persistence.
+- Final accepted card copy: `방문함 · 대표 별점 4 · 다시 갈 의향 있음`.
+- Accepted automated evidence: lint pass, production build pass, `git diff --check` pass.
+
+### Scope confirmation
+
+- T-107 is `DONE`; T-108 remains `BACKLOG` pending explicit Owner/Toby approval.
+- Migration 001·002·003, schema, RLS, packages, DB test data, T-108+, Git commit/push, and Vercel were not changed during this closeout.
+
+— Hank
+
+---
+
 ## 2026-07-18 — Gini — T-106 final acceptance and Restaurant CRUD GitHub checkpoint
 
 ### Goal
@@ -79,6 +99,166 @@ Hank `Approve with changes`의 Low finding 1건만 수정합니다. T-106은 `RE
 - DB row, migration, package, secret: unchanged
 
 — Gini
+
+---
+
+## 2026-07-18 — Hank — T-107 card summary copy correction
+
+### Change
+
+- Restaurant card summary의 `재방문 있음/없음` 문구를 `다시 갈 의향 있음/없음`으로 변경했습니다.
+- `revisit_intention` DB field, visit service, 저장·조회 로직, 대표 방문 규칙은 변경하지 않았습니다.
+
+### Validation
+
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- `git diff --check`: pass
+
+T-107은 closeout 전 `REVIEW` 상태를 유지합니다.
+
+— Hank
+
+---
+
+## 2026-07-18 — Hank — T-107 summary error isolation
+
+### Finding
+
+Gini Medium finding: Restaurant SELECT 성공 후 representative summary SELECT만 실패해도 summary 오류가 list-blocking `restaurantError`로 전달되어 정상 Restaurant card와 CRUD가 전체 error UI 뒤에 가려졌습니다.
+
+### Correction
+
+- Restaurant SELECT 실패 경로는 기존대로 `restaurantError`와 retry UI를 유지합니다.
+- Restaurant SELECT가 성공한 뒤 summary만 실패하면 `visitSummaries`를 빈 map으로 설정하고 `restaurantError`는 `null`로 유지합니다.
+- 따라서 별점·재방문 표시만 생략되고 정상 Restaurant card와 수정·방문 기록·삭제 동작은 계속 표시됩니다.
+- Summary service의 안전한 오류도 blocking UI나 console로 전달하지 않으며 raw Supabase 오류를 노출하지 않습니다.
+
+### Validation
+
+- summary failure → empty summary map + Restaurant list 유지: static pass
+- Restaurant failure → existing list error/retry branch 유지: static pass
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- `git diff --check`: pass
+- out-of-scope path scan: no migration/package/T-108+ changes
+
+### Scope / status
+
+T-107은 `REVIEW` 유지. Summary query/대표 규칙, VisitEditor 저장, migration/schema/RLS/package/DB data, T-108+, Git/Vercel은 변경하지 않았습니다.
+
+— Hank
+
+---
+
+## 2026-07-18 — Hank — T-107 card representative summary
+
+### Context
+
+Owner의 T-107 수동 기능 검증 6단계가 모두 통과했습니다: 방문 INSERT/조회/UPDATE/새로고침 persistence, rating validation과 cancel 보존, visited/unvisited 전환, unvisited 이력 보존, visited 재전환 시 대표 방문 복원, logout/relogin persistence.
+
+### Acceptance-gap correction
+
+- `visitService.getRepresentativeVisitSummaries()`를 추가해 현재 사용자의 restaurant id 집합으로만 방문을 조회합니다. 기존 규칙인 non-null `visited_at` DESC → `updated_at` DESC → `id` DESC를 그대로 적용하고 식당별 첫 행을 대표 방문으로 선택합니다.
+- 페이지 목록 로드 시 식당 조회 성공 후 대표 방문 summary를 함께 조회합니다. 동일한 list request id와 keyed user lifecycle guard를 사용하므로 stale 응답이나 사용자 전환 후 결과는 반영되지 않습니다.
+- 방문 editor 저장 성공 시 반환된 대표 visit만 local summary map에 병합합니다. 목록 전체 재조회는 하지 않습니다. 미방문 저장 또는 식당 삭제 시 해당 local summary를 제거합니다.
+- Card는 `visited`이고 대표 방문이 있을 때만 저장된 대표 별점(값이 있을 때)과 `재방문 있음/없음`을 표시합니다. `unvisited`에서는 보존된 과거 visit 세부정보를 표시하지 않습니다.
+
+### Files changed
+
+- `src/services/visitService.js`
+- `src/App.jsx`
+- `src/components/visits/VisitEditor.jsx`
+- `src/components/restaurants/RestaurantList.jsx`
+- `src/App.css`
+- `WORK_LOG.md`, `docs/chat/hank-chat.md`
+
+### Validation
+
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- `git diff --check`: pass
+- visited summary render / unvisited hide flow: static check pass
+- migration 001·002·003, package, T-108+, DB test data, Git push, Vercel: unchanged
+
+### Next action
+
+T-107 remains `REVIEW`. Gini performs a narrow re-review of only the card-summary query, local update, and visibility condition.
+
+— Hank
+
+---
+
+## 2026-07-18 — Hank — T-107 Medium finding correction
+
+### Goal
+
+최초 방문 INSERT 성공 후 식당 status UPDATE가 실패할 때 재시도가 중복 visit INSERT를 만들 수 있는 Gini Medium finding을 최소 수정합니다.
+
+### Correction
+
+- `visitService.saveVisitState()`는 방문 INSERT/UPDATE가 성공한 뒤 status UPDATE가 실패하면 성공한 `visit`을 버리지 않고 `{ visit, restaurant: null, error: 안전한 한국어 오류 }`로 반환합니다.
+- `VisitEditor.handleSubmit()`은 오류 결과에 `visit`이 있으면 먼저 `representativeVisit`으로 보존하고 오류를 표시합니다. Editor는 닫히지 않으며, 다음 제출은 보존된 `visit.id`를 전달해 INSERT가 아닌 owner-scoped UPDATE를 수행합니다.
+- RPC, transaction, rollback, delete, migration/schema/RLS, T-108+, Restaurant CRUD/Auth 변경은 없습니다.
+
+### Validation
+
+- 해당 service 반환 경로와 editor 오류 경로 정적 확인
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- correction-scoped `git diff --check` and source trailing-whitespace scan: pass
+- full working-tree `git diff --check`: blocked only by pre-existing `docs/chat/gini-chat.md:65-70` trailing whitespace; Hank did not modify another Agent's chat file
+- migration/package/T-108+ protected-scope scan: no changes
+
+### Status
+
+T-107은 `REVIEW`를 유지하며 Gini narrow re-review가 필요합니다.
+
+— Hank
+
+---
+
+## 2026-07-18 — Hank — T-107 Visit editor
+
+### Goal
+
+기존 식당의 대표 방문 1건을 중심으로 방문 여부, 방문일, 전체 별점, 방문 메모, 재방문 의사와 메모를 owner-scoped Supabase CRUD로 기록합니다.
+
+### Implementation
+
+1. `src/services/visitService.js`를 추가해 `visits`의 owner+restaurant 범위 대표 방문 SELECT, 대표 방문 INSERT/UPDATE, `user_restaurants.status` UPDATE를 서비스 계층으로 분리했습니다. 모든 DB 오류는 고정 한국어 메시지로 변환합니다.
+2. 대표 방문 선택은 **`visited_at`이 있는 행 우선 내림차순 → `updated_at` 내림차순 → `id` 내림차순**입니다. 이 규칙은 식당별 다회 방문 DB 구조에서 UI가 항상 하나의 동일한 대표 행을 편집하게 합니다.
+3. 미방문 저장은 `user_restaurants.status`만 `unvisited`로 바꾸며 기존 방문 행을 삭제하지 않습니다. UI는 그 행을 무시하고 빈 미방문 상태를 보이며, 다시 방문함을 선택하면 위 규칙의 대표 행을 이어서 편집합니다. 따라서 다회 방문 이력은 보존됩니다.
+4. `src/components/visits/VisitEditor.jsx`에 방문 여부, date, nullable 1–5 integer rating, 방문 메모, 재방문 checkbox/note, loading/error-retry/empty, save/cancel/pending 상태를 구현했습니다. 대표 방문을 읽지 못하면 폼을 열지 않아 중복 INSERT 위험을 막습니다.
+5. `RestaurantList`에 식당별 `방문 기록` 진입점을 추가하고, `App`은 방문 저장 후 반환된 owner restaurant status 행만 병합·최근 수정 시각순 재정렬합니다. keyed user remount와 editor의 mount/request-id guards로 logout/user switch/unmount 뒤 늦은 SELECT/save 결과를 차단합니다.
+
+### Files changed
+
+- Created: `src/services/visitService.js`, `src/components/visits/VisitEditor.jsx`
+- Updated: `src/App.jsx`, `src/App.css`, `src/components/restaurants/RestaurantList.jsx`
+- Records: `TASK_BOARD.md`, `WORK_LOG.md`, `docs/chat/hank-chat.md`
+
+### Validation
+
+| Check | Result |
+|---|---|
+| `npm.cmd run lint` | pass (`oxlint`) |
+| `npm.cmd run build` | pass (Vite 8.1.4) |
+| `git diff --check` | pass |
+| migration 001·002·003 / package files diff | no changes |
+| service-role/secret scan in changed visit paths | no matches |
+| Actual Supabase/DB test | not run by design; Owner uses existing `산방밀면` |
+
+### Risk / manual verification boundary
+
+- Browser client CRUD cannot make the visit write and restaurant-status write atomic without an approved database RPC/schema change; the service saves the representative visit first and then sets `status` to `visited`. If the second request fails, a safe error is shown and retry updates the same selected representative visit before retrying the status write. No hidden rollback or destructive action is attempted.
+- T-107 is `REVIEW`, not DONE. Gini source review and Owner manual persistence verification remain required.
+
+### Next action
+
+Gini reviews only T-107. Owner runs the recorded `산방밀면` manual flow. T-108, database mutation by agents, migration/package/Auth work, Git commit/push, and Vercel deploy remain out of scope.
+
+— Hank
 
 ---
 

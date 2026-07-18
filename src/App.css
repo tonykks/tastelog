@@ -383,6 +383,75 @@
   margin-bottom: 10px;
 }
 
+.visit-editor {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+.visit-editor-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.visit-editor-heading h2,
+.visit-editor-heading p {
+  margin: 0;
+}
+
+.visit-editor-heading h2 {
+  color: var(--text-h);
+  font-size: 20px;
+}
+
+.visit-editor-heading p,
+.visit-empty-message {
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.visit-status-fieldset {
+  display: flex;
+  gap: 16px;
+  margin: 0 0 20px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.visit-status-fieldset legend {
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.visit-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.visit-fields {
+  display: grid;
+  gap: 8px;
+}
+
+.visit-textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.visit-editor-actions {
+  margin-top: 16px;
+}
+
 .delete-confirmation {
   width: min(280px, 100%);
   padding: 12px;
@@ -428,6 +497,20 @@
 .restaurant-submit:focus-visible,
 .retry-button:focus-visible,
 .restaurant-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.restaurant-visit-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px 10px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.visit-choice input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
