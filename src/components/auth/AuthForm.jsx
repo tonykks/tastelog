@@ -58,7 +58,8 @@ function AuthForm() {
 
   return (
     <div className="auth-card">
-      <h1 className="auth-title">TasteLog</h1>
+      <h1 className="auth-title">다시갈집</h1>
+      <p className="auth-brand-secondary">TasteLog</p>
       <p className="auth-subtitle">기억나는 맛집 이름부터 기록해 보세요.</p>
 
       <div className="auth-tabs" aria-label="로그인 또는 회원가입 선택">

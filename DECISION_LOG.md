@@ -138,17 +138,32 @@ Status: `Proposed` · `Accepted` · `Rejected` · `Superseded` · `Deferred`
 - Consequence: T-100~T-104는 재수행하지 않는다. T-105는 Owner/Toby의 별도 시작 승인 전 자동 착수하지 않는다.
 - Result: checkpoint commit `91f7b5d0047b5f716c85822682cbbcc2a0fc6582`가 `origin/main`에 push 완료됐고 local `main`과 동일하다.
 
+## D-007: Final product name
+
+- Date: 2026-07-18
+- Status: Accepted
+- Decided by: Owner + Toby
+- Related: T-110, T-112
+- Decision: 화면 주 brand는 `다시갈집`, 보조 brand/technical identity는 `TasteLog`이다. Browser title은 `다시갈집 | TasteLog`이다. GitHub repository와 technical project name은 TasteLog를 유지한다.
+- Reason: Owner가 T-110 시작 승인에서 화면 표시명과 technical identity를 분리해 확정했다.
+- Consequence: UI header·Auth·document title은 다시갈집/TasteLog 병기를 따르며 DB table·기능 API 이름은 변경하지 않는다.
+
+## D-008: UI implementation style
+
+- Date: 2026-07-18
+- Status: Accepted
+- Decided by: Owner + Toby
+- Related: T-110, T-101
+- Decision: Phase 1 UI는 plain CSS만 사용한다. Visual theme은 warm off-white 배경, 기존 purple primary accent, gold rating star, visited purple badge, unvisited neutral gray/lavender, destructive red, white card + thin border + light shadow이다. UI library·icon package·과도한 animation은 추가하지 않는다.
+- Reason: 과제 설명·유지보수 용이성과 Owner 확정 theme을 맞춘다.
+- Consequence: T-110은 CSS variables와 공통 RatingStars로 적용하며 package.json에 UI framework를 추가하지 않는다.
+
 ## Proposed decisions for Owner
 
 ### D-007: Final product name
 
-- Status: Proposed
-- Options: `TasteLog`, `다시갈집`, 병기
-- Needed by: T-110
+- Status: Accepted — see Accepted section above (2026-07-18). Historical options were `TasteLog`, `다시갈집`, 병기; Owner chose primary `다시갈집` with auxiliary `TasteLog`.
 
 ### D-008: UI implementation style
 
-- Status: Proposed
-- Options: plain CSS 우선 / 승인된 UI library 사용
-- Toby recommendation: 과제 설명과 유지보수가 쉬운 plain CSS 우선
-- Needed by: T-101
+- Status: Accepted — see Accepted section above (2026-07-18). Historical options were plain CSS vs approved UI library; Owner chose plain CSS with the warm off-white + purple + gold-star theme.

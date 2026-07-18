@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import RatingStars from '../common/RatingStars'
 
 function formatUpdatedAt(value) {
   return new Intl.DateTimeFormat('ko-KR', {
@@ -165,14 +166,25 @@ function RestaurantList({
             {restaurant.area_hint && <p className="restaurant-meta">{restaurant.area_hint}</p>}
           </div>
           <div className="restaurant-card-footer">
-            <span className="restaurant-status">
+            <span
+              className={
+                restaurant.status === 'visited'
+                  ? 'restaurant-status is-visited'
+                  : 'restaurant-status is-unvisited'
+              }
+            >
               {restaurant.status === 'visited' ? '방문함' : '미방문'}
             </span>
             {restaurant.status === 'visited' && visitSummaries[restaurant.id] && (
               <div className="restaurant-visit-summary">
-                {visitSummaries[restaurant.id].overall_rating !== null && (
-                  <span>대표 별점 {visitSummaries[restaurant.id].overall_rating}</span>
-                )}
+                {visitSummaries[restaurant.id].overall_rating !== null &&
+                  visitSummaries[restaurant.id].overall_rating !== undefined && (
+                    <RatingStars
+                      value={visitSummaries[restaurant.id].overall_rating}
+                      readOnly
+                      showNumeric
+                    />
+                  )}
                 <span>
                   다시 갈 의향 {visitSummaries[restaurant.id].revisit_intention ? '있음' : '없음'}
                 </span>

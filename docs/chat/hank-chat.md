@@ -3,6 +3,174 @@
 ## Hank → Owner, Toby, Gini, Any
 
 - Date: 2026-07-18
+- Related task: T-110 Visit/Menu panel header narrow re-review
+- Status: **REVIEW maintained**
+- Review model: **GPT-5.6**
+
+### Final verdict
+
+**Approve**
+
+### Findings
+
+- Both Visit and Menu headers render the visual `×` close control with distinct, accurate labels: `방문 기록 닫기` and `메뉴 기록 닫기`. `.panel-close-button` fixes its flex basis and width at 44px, keeps the inherited `min-height: 44px`, and has no padding; the target is therefore 44×44px.
+- Both controls retain `.restaurant-action:focus-visible`'s visible 2px accent outline. Their handlers remain exactly `onCancel` (Visit) and `onClose` (Menu); only presentation and accessible naming changed.
+- Visit's subtitle is exactly `대표 방문 1건을 표시합니다.` At 360px, the panel has about 290px inner width; reserving the 44px button and 8px header gap leaves about 238px for its `div`. The 13px Korean subtitle fits on one line within that width. `min-width: 0` prevents the text container from forcing header expansion and `white-space: nowrap` prevents wrapping. No clip, overlap, or horizontal overflow is introduced by this text at the reviewed width.
+- The subtitle-specific mobile rules are inside `max-width: 480px`, so desktop layout retains its prior 14px normal-flow text behavior. The inspected narrow diffs leave save/cancel/CRUD handlers and the `RatingStars` contract untouched; no services, migrations, packages, DB, Git, or Vercel files are changed.
+
+### Validation evidence
+
+Gini's stated lint, build, and `git diff --check` success is consistent with the inspected source. My own `git diff --check` completed successfully, with only existing LF-to-CRLF warnings. I performed no browser, source/DB/task-status/Git mutation, commit, push, or test-data creation.
+
+### Owner remaining check
+
+At the Owner's normal 360px browser scale, verify the visual `×`, focus ring, and untruncated Visit subtitle. T-110 remains `REVIEW` pending its broader Owner verification.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-110 focus/contrast/360px Auth findings narrow re-review
+- Status: **REVIEW — Approve**
+- Actual review model: **Codex / GPT-5**
+
+### 1. Final verdict
+
+**Approve**
+
+이전 finding 3건은 모두 최소 수정으로 해결됐습니다. T-110은 `REVIEW`로 유지합니다.
+
+### 2. Finding resolution
+
+#### Finding 1 — RatingStars focus: resolved
+
+- `.rating-star-option:has(input:focus-visible)`이 투명한 1px input이 아니라 실제 44px 별 label에 outline을 표시합니다.
+- 동일 name의 native radio 구조가 유지되어 Tab 진입과 arrow 이동 시 focus가 이동한 input을 포함하는 label ring도 함께 이동합니다.
+- Disabled radio의 label은 `opacity: 0.55`와 `cursor: not-allowed`로 pending 상태를 시각적으로 구분합니다.
+- Selected는 `★` + bold + underline, unselected는 `☆`이므로 색상 외 cue가 있습니다.
+- Native radio, radiogroup/screen-reader name, numeric 1–5/null normalization과 Visit/Menu 호출 계약은 변경되지 않았습니다.
+
+#### Finding 2 — contrast: resolved
+
+- 독립 WCAG luminance 계산: gold `#8a6500`/white `5.33:1`, empty `#6f6960`/white `5.43:1`, accent `#7a1fcc`/white와 white/accent `7.25:1`.
+- 실제 accent consumer 조합도 page background에서 `6.56:1`, 12% accent tint background에서 `5.92:1`입니다.
+- Star control graphics의 3:1 및 normal text의 4.5:1 기준을 충족합니다. White card/form의 gold·empty stars와 accent button/text 조합에 수정 변수가 실제 적용됩니다.
+
+#### Finding 3 — 360px Auth overflow: resolved
+
+- `.auth-card`에 `box-sizing: border-box`가 직접 적용됩니다.
+- 360px viewport에서 `.screen.center` 좌우 padding 32px를 제외한 card outer width는 약 328px이며, card padding/border가 이 폭 안에 포함됩니다.
+- 좌우 약 16px 여유가 있어 card border와 내부 control focus ring이 root edge에 잘리지 않습니다. 기존 `overflow-x: hidden`은 남아 있지만 이 box model 계산은 clipping에 의존하지 않습니다.
+- Desktop에서는 outer max-width가 380px로 일관되며 field/button width와 내부 padding이 그 안에서 계산되어 기능적 layout 회귀가 없습니다.
+
+### 3. Residual accessibility · responsive risk
+
+- Source 기준 잔여 finding은 없습니다.
+- `:has()` focus styling, radio arrow 이동, 360px 실측은 최신 Chromium 계열에서 지원되는 구조입니다. Reviewer 환경에는 인앱 browser가 제공되지 않아 실제 화면 조작은 수행하지 못했으므로 Owner의 keyboard/360px browser 확인은 그대로 필요합니다.
+
+### 4. Gini checks
+
+- Gini의 lint, production build, correction-scoped `git diff --check` pass는 수정 source와 일치하므로 수용하고 재실행하지 않았습니다.
+- Reviewer는 contrast와 360px box model만 read-only local 계산으로 독립 확인했습니다.
+
+### 5. Scope · regression
+
+- RatingStars normalize 계약, Visit/Menu 저장, readonly 표시, 공백 price trim, `{ aborted: true }` stale 처리에는 finding 수정으로 인한 구조 변경이 없습니다.
+- migration 001·002·003, package/lock, services에는 baseline diff가 없습니다. DB data, T-111+, secret, Git commit/push, Vercel 작업도 없습니다.
+- Reviewer는 source·DB·task status를 수정하지 않았고 이 Hank chat 기록만 추가했습니다.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-110 Responsive UI + accessibility + RatingStars independent review
+- Status: **REVIEW — Approve with changes**
+- Actual review model: **Codex / GPT-5**
+
+### 1. Final verdict
+
+**Approve with changes**
+
+RatingStars의 데이터 계약, Visit/Menu 통합, T-108 Low 두 건, readonly 표시, 기존 Dashboard/CRUD 흐름은 통과했습니다. 다만 keyboard focus, 색상 대비, 약 360px Auth 폭에 실제 접근성·반응형 finding이 있어 최소 수정 후 narrow re-review가 필요합니다. T-110은 `REVIEW`로 유지합니다.
+
+### 2. Findings
+
+#### Finding 1 — interactive 별점의 focus indicator가 보이지 않음
+
+- Severity: **Medium**
+- Location: `src/App.css:713`, `src/App.css:750` (`.rating-star-option input:focus-visible`, hidden radio styling)
+- Actual risk: radio input은 `opacity: 0`이고 크기도 `1px × 1px`인데 outline을 그 input 자체에 적용합니다. Opacity는 outline에도 적용되므로 keyboard 사용자가 현재 별 선택지의 focus를 시각적으로 확인할 수 없습니다. Native radio keyboard 동작과 screen-reader name은 살아 있지만 T-110의 명시적 focus-visible acceptance를 충족하지 않습니다.
+- Minimum fix: `input:focus-visible`일 때 보이는 44px label 또는 star에 outline을 적용합니다. 예: `.rating-star-option:has(input:focus-visible)`에 outline/border-radius를 주거나 `input:focus-visible + .rating-star`에 명확한 focus ring을 표시합니다.
+
+#### Finding 2 — star와 일부 accent foreground의 대비 부족
+
+- Severity: **Medium**
+- Location: `src/index.css:9-12` (`--accent`, `--star-gold`, `--star-empty`), consumers in `src/App.css`
+- Actual risk: source 색상 기준 계산에서 gold `#c79212`/white 대비는 약 `2.78:1`, accent `#aa3bff`/white는 약 `4.39:1`입니다. Gold/empty star는 interactive control과 선택 상태를 식별하는 핵심 시각 정보인데 3:1에 못 미치며, 13–14px accent text도 일반 텍스트 4.5:1 기준에 약간 못 미칩니다. 특히 별의 선택/미선택 상태는 동일한 `★` glyph의 색 변화에 의존하므로 저시력 사용자가 상태를 구분하기 어렵습니다.
+- Minimum fix: theme의 gold/purple 정체성은 유지하면서 `--star-gold`, 필요 시 `--star-empty`, normal-text용 accent를 더 어둡게 조정해 control graphics 3:1 및 일반 텍스트 4.5:1을 만족시킵니다. 선택 별에 outline/shape 차이 같은 비색상 cue를 추가하면 더 안전합니다.
+
+#### Finding 3 — 약 360px Auth card가 viewport 폭을 초과
+
+- Severity: **Low**
+- Location: `src/App.css:21` `.auth-card`, `src/App.css:837` mobile padding, `src/index.css:59` root overflow clipping
+- Actual risk: `.screen.center`의 좌우 padding 16px 안에서 `.auth-card { width: 100% }`가 content-box로 계산되고, mobile card padding 18px와 border가 추가됩니다. 360px에서는 card outer width가 약 366px가 되어 viewport보다 넓고, `#root { overflow-x: hidden }`이 이를 해결하지 않고 가장자리를 clip합니다.
+- Minimum fix: `.auth-card { box-sizing: border-box; }`를 적용하고 360px에서 `scrollWidth === clientWidth`와 border/focus ring 비클리핑을 확인합니다.
+
+### 3. RatingStars contract · accessibility
+
+- `normalizeStarRating`은 integer 1–5만 유지하고 null/undefined/0/6/negative/fraction/string을 null로 만듭니다. Interactive `onChange`도 numeric constants 1–5 또는 clear의 null만 생성합니다.
+- Visit/Menu 호출부는 restaurant/menu id 기반의 고유 `id`와 `name`을 전달해 동시에 렌더링되어도 radio group 충돌이 없습니다.
+- radiogroup label, 각 radio의 숨김 `N점` name, native checked/disabled semantics, readonly outer `aria-label="5점 만점에 N점"`와 hidden glyph는 적절합니다.
+- Pending 중 radios는 실제 disabled되지만 label cursor/opacity는 active처럼 남습니다. Finding 1 수정 때 disabled label도 `cursor: not-allowed`와 시각적 dimming을 주는 것이 권장됩니다.
+
+### 4. Visit · Menu · Dashboard regression
+
+- VisitEditor는 rating을 number/null로 유지하고 기존 service는 이를 integer 1–5/null payload로 정상 처리합니다. 저장·취소·retry·대표 방문·unvisited historical-detail 비노출 흐름은 구조 변경이 없습니다.
+- Menu 맛 평가는 price와 별도 state이며 number/null로 전달됩니다. 공백 price는 UI submit 전에 trim되어 service에서 null이 되고, menu service가 unchanged이므로 UPDATE 시 기존 `visit_id`가 payload에서 계속 제외되어 보존됩니다.
+- Restaurant card는 visited일 때만 대표 별점을 렌더링합니다. Menu card와 Restaurant card의 invalid local rating은 RatingStars 내부에서 `평가 없음`으로 축소되고, Top 5는 T-109 integer guard를 지난 rating만 받습니다.
+- Restaurant CRUD, Visit save, Menu CRUD, summary/Top 5, search/filter/sort state/query 구조와 Supabase 호출 수에는 T-110 변경이 없습니다. Loading/empty/error/retry와 safe error mapping도 유지됩니다.
+
+### 5. Responsive · theme
+
+- `다시갈집` primary, `TasteLog` secondary, document title `다시갈집 | TasteLog`가 D-007과 일치합니다. D-008의 plain CSS, warm off-white, purple, gold, status badge, destructive red도 구현됐고 package 추가가 없습니다.
+- visited/unvisited는 badge text를 유지하고 error는 text+role을 사용하므로 색상만으로 의미를 전달하지 않습니다.
+- Header/user row, summary grid, Restaurant cards/actions, Menu grid는 768/480 breakpoints에서 wrap/column 전환됩니다. Visit/Menu panel은 mobile width/max-width/box-sizing이 있어 정적 구조상 안전합니다.
+- Finding 3 외에는 명백한 width overflow를 찾지 못했습니다. 인앱 browser가 현재 제공되지 않아 viewport 실측은 수행하지 못했으며 Owner 실제 browser 확인이 필요합니다.
+
+### 6. T-108 Low findings
+
+- **Low A pass:** MenuReviewForm은 price를 trim한 뒤 validate/submit하여 whitespace-only가 empty/null로 service와 일치합니다. Taste rating state와 독립입니다.
+- **Low B pass:** stale create/update는 `{ aborted: true }`를 반환하고 MenuReviewForm은 이를 error/success보다 먼저 확인해 form reset과 edit close를 실행하지 않습니다. Mounted request mismatch에서는 pending도 정리됩니다.
+
+### 7. Gini checks
+
+- Gini의 lint pass, production build pass, normalize smoke pass는 source 계약과 일치하므로 수용합니다.
+- Reviewer의 full `git diff --check`도 CRLF warning만 있고 pass했습니다. JSX를 Node ESM으로 직접 import한 추가 normalize 시도는 확장자 loader 부재로 product 실행 전에 중단되어 판정 근거로 사용하지 않았고 package/transform 도구를 추가하지 않았습니다.
+
+### 8. Owner 12-step manual plan
+
+- 기록된 범위(theme, Visit/Menu stars, mobile overflow, keyboard, CRUD/dashboard regression, persistence)는 통합 acceptance에 충분합니다.
+- 수정 후 keyboard Tab/arrow focus ring, 360px Auth `scrollWidth/clientWidth`, selected/unselected star visibility와 contrast를 명시적으로 포함해야 합니다. Contrast는 육안만이 아니라 devtools/a11y checker 수치 확인이 적절합니다.
+
+### 9. Out-of-scope confirmation
+
+- Baseline HEAD `376ee045cd4ace0ac40a2281015bebd124d39d17`와 일치합니다.
+- migration 001·002·003, package/lock, services에는 diff가 없습니다. 새 DB fetch/mutation, DB data 작업, secret/service-role credential, T-111+, Git commit/push, Vercel 작업도 없습니다.
+- Reviewer는 source·DB·task status를 수정하지 않았고 이 Hank chat 기록만 추가했습니다.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
 - Related task: T-109 `getRepresentativeRating` Low finding narrow re-review
 - Status: **REVIEW — Approve**
 
@@ -1021,3 +1189,38 @@ Per Toby's instruction, I did not repeat lint/build/smoke/audit or perform Supab
 5. Run only local static checks, lint, build, and `git diff --check`; Gini reviews source and Owner manually verifies the existing `산방밀면` record.
 
 — Hank
+# Hank Chat
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-110 mobile restaurant-card footer narrow re-review
+- Status: **REVIEW maintained**
+- Review model: **GPT-5.6**
+
+### Final verdict
+
+**Approve**
+
+### 360px single-row basis
+
+At the `max-width: 480px` breakpoint, `.app-main` is 332px wide at a 360px viewport (14px horizontal padding each side). The card's 18px padding plus 1px borders leave an approximately 294px content width. Its direct footer action row is `width: 100%`, `flex-wrap: nowrap`, with three 4px gaps; four `flex: 1 1 0` controls therefore receive approximately 70.5px each. The longest labels (`방문 기록`, `메뉴 기록`) fit at 12px with 4px horizontal padding, and `white-space: nowrap` prevents label wrapping.
+
+### Touch, overflow, and scope
+
+- `.restaurant-action` retains `min-height: 44px`; the mobile rule changes only horizontal padding, font size, flex sizing, and nowrap.
+- The selector starts with `.restaurant-card-footer > .restaurant-actions`, so it applies only to the card footer's direct action row. The edit-form and delete-confirmation action rows are not direct children of `.restaurant-card-footer`; Visit/Menu panels are likewise unaffected.
+- The no-wrap row fills its available width without an intrinsic minimum-width constraint (`min-width: 0`), so this rule does not introduce horizontal overflow at the reviewed width. Real-device font rendering/zoom remains an Owner browser check.
+- The rule is inside `max-width: 480px`; desktop/tablet layouts retain their existing wrapping, 8px-gap action behavior. `RestaurantList.jsx` has no functional diff in the four handlers, CRUD paths, or `RatingStars` contract for this correction.
+
+### Validation evidence
+
+Gini's reported `npm.cmd run lint`, `npm.cmd run build`, and `git diff --check` pass results are consistent with the inspected source. My own `git diff --check` completed successfully; Git emitted only existing LF-to-CRLF warnings. I did not run a browser, alter source/DB/task status/Git, or create test data.
+
+### Owner remaining check
+
+At approximately 360px, verify the four labels remain visually unclipped at the Owner's browser font scale and that keyboard focus remains visible on every action. T-110 should remain `REVIEW` pending that broader Owner verification.
+
+— Hank
+
+---

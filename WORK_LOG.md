@@ -4,6 +4,198 @@
 
 ---
 
+## 2026-07-18 — Gini — T-110 final closeout
+
+### Result
+
+- T-110 is `DONE`: Hank independent review and all narrow re-reviews approved; Owner completed the 12-step browser verification.
+- Accepted corrections: RatingStars focus/contrast, 360px Auth sizing, four mobile restaurant actions in one row, and Visit/Menu × header controls with accessible names and one-line subtitle.
+- Owner verified desktop/mobile branding, ratings (1–5/null), keyboard operation, responsive overflow, Visit/Menu persistence, and final data.
+
+### Final Owner data
+
+- Restaurant `산방밀면`: `visited`, representative rating `4`, revisit intention `true`
+- Menu `밀면`: price `8500`, taste rating `4`, memo `담백하고 시원했습니다.`
+
+### Documentation / handoff
+
+- `TASK_BOARD.md`: T-110 `DONE`; T-111+ statuses and role assignments remain unchanged (`BACKLOG`)
+- `TASK_BOARD.md`: T-112 will integrate the T-110 Gini/Hank role split and review/fix evidence
+- `WORK_LOG.md`, `docs/chat/gini-chat.md`: this closeout
+
+### Validation
+
+- Prior lint/build evidence accepted by Owner/Toby; not rerun for this documentation-only closeout
+- Documentation-only `git diff --check`: pass
+- No source, DB, migration, package, Git commit/push, or Vercel changes
+
+### Next action
+
+Await Owner/Toby approval before starting any existing BACKLOG task.
+
+---
+
+## 2026-07-18 — Gini — T-110 panel header UI correction
+
+### Goal
+
+Owner 모바일 검증 finding을 해결합니다: Visit/Menu panel header의 닫기 control을 compact한 × button으로 통일하고 Visit subtitle을 360px에서 한 줄로 표시합니다.
+
+### Work performed
+
+- `VisitEditor`: visual label `닫기` → `×`, `aria-label="방문 기록 닫기"`, subtitle → `대표 방문 1건을 표시합니다.`
+- `MenuReviewPanel`: visual label `닫기` → `×`, `aria-label="메뉴 기록 닫기"`
+- `.panel-close-button`: 44×44px fixed touch target, 24px × glyph, existing `.restaurant-action:focus-visible` outline retained
+- Mobile Visit heading: 8px gap, flexible text column, 13px no-wrap subtitle
+- Handler, disabled condition, saving/cancel logic, desktop heading layout, CRUD/RatingStars unchanged
+
+### Files changed
+
+- `src/components/visits/VisitEditor.jsx`
+- `src/components/menus/MenuReviewPanel.jsx`
+- `src/App.css`
+- `WORK_LOG.md`
+- `docs/chat/gini-chat.md`
+
+### Validation
+
+- 360px static layout: Visit panel content width ~290px; 44px button + 8px gap leaves ~238px for shortened 13px subtitle, so it remains one line without horizontal overflow
+- Visible keyboard focus: inherited `.restaurant-action:focus-visible` outline remains active
+- Accessible names: `방문 기록 닫기`, `메뉴 기록 닫기`
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass
+- `git diff --check`: pass (existing CRLF conversion warnings only)
+- IDE diagnostics: none
+
+### Status / review request
+
+- T-110 remains `REVIEW`; no commit or push
+- Hank: Visit/Menu panel header UI only — × label, accessible names, 44px target/focus, 360px subtitle/overflow, and no handler regression
+
+### Risks
+
+- Actual 360px browser visual confirmation remains an Owner/Hank review item; scope was intentionally limited to the requested header UI.
+
+---
+
+## 2026-07-18 — Gini — T-110 mobile restaurant action row correction
+
+### Goal
+
+Owner 모바일 검증 finding을 해결합니다: 약 360~450px 식당 카드에서 `수정`·`방문 기록`·`메뉴 기록`·`삭제` action을 한 줄로 유지합니다.
+
+### Work performed
+
+- `src/App.css`의 `@media (max-width: 480px)`에 식당 카드 footer action row 전용 규칙만 추가
+- direct-card selector로 한정해 삭제 확인 panel, Visit/Menu panel, 다른 action row는 변경하지 않음
+- 4개 action을 equal flex item으로 만들고 `nowrap`, 4px gap, 12px font, 4px horizontal padding 적용
+- 기존 `min-height: 44px`은 유지; JSX, event handler, CRUD, RatingStars는 변경하지 않음
+
+### Files changed
+
+- `src/App.css`
+- `WORK_LOG.md`
+- `docs/chat/gini-chat.md`
+
+### Validation
+
+- 360px static layout check: `.app-main` 14px 좌우 padding 및 card 18px 좌우 padding 기준 action container 약 294px; 4px gap 3개를 제외하면 각 action 약 70.5px. 가장 긴 label `방문 기록` / `메뉴 기록`도 `white-space: nowrap` 상태로 수용
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass
+- `git diff --check`: pass (existing CRLF conversion warnings only)
+- `src/App.css` IDE diagnostics: none
+
+### Status / review request
+
+- T-110 remains `REVIEW`; no task status change, commit, or push
+- Hank: 식당 카드 mobile action row만 narrow re-review 요청 (360px 4 actions one row, no-wrap, 44px target, overflow/regression)
+
+### Risks
+
+- 실제 360px browser visual check is still an Owner/Hank review item; this change is intentionally scoped to CSS layout only.
+
+---
+
+## 2026-07-18 — Gini — T-110 Hank findings correction (focus / contrast / Auth)
+
+### Corrections
+
+1. **Medium — RatingStars focus:** `.rating-star-option:has(input:focus-visible)`에 44px label outline; hidden radio outline 제거. Disabled: `cursor: not-allowed` + opacity. Selected stars use ★ vs ☆ + underline weight cue.
+2. **Medium — contrast:** `--star-gold` `#8a6500` (~5.33:1 vs white), `--star-empty` `#6f6960` (~5.43:1), `--accent` `#7a1fcc` (~7.25:1 vs white; ~6.56:1 vs page-bg). White-on-accent submit ~7.25:1. Theme identity kept (darker purple/gold).
+3. **Low — Auth overflow:** `.auth-card { box-sizing: border-box; }`. 360px: center padding 16×2 → card outer 328px (was ~366 with content-box).
+
+### Files
+
+- `src/index.css`, `src/App.css`, `src/components/common/RatingStars.jsx`
+- Records: `WORK_LOG.md`, `docs/chat/gini-chat.md`
+
+### Validation
+
+- Contrast ratios recorded above (computed)
+- 360px Auth width: static border-box math pass
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass
+- correction-scoped `git diff --check`: pass
+- RatingStars 1–5/null contract, Visit/Menu services, abort/price Low paths: unchanged
+
+### Status
+
+T-110 remains `REVIEW`. Hank narrow re-review requested for focus / contrast / Auth overflow only.
+
+— Gini
+
+---
+
+## 2026-07-18 — Gini — T-110 Responsive UI / a11y / RatingStars
+
+### Name · theme (D-007 / D-008 Accepted)
+
+- Primary UI brand: `다시갈집`; auxiliary: `TasteLog`; title: `다시갈집 | TasteLog`
+- Theme: warm off-white page (`--page-bg`), white cards, purple accent retained, gold stars, visited purple / unvisited gray-lavender badges, destructive red; plain CSS only; light color-scheme
+
+### RatingStars
+
+- `src/components/common/RatingStars.jsx`: interactive radiogroup + clear (“평가하지 않음”) and readonly display
+- Contract: integer 1–5 or null only (`normalizeStarRating`); invalid local values → null; no half-star; no string storage
+- Applied: VisitEditor overall rating; MenuReviewForm taste rating; Restaurant card / Top 5 / Menu card readonly
+- Service/DB validation unchanged
+
+### Responsive / a11y
+
+- Breakpoints ~768 / ~480; overflow-x hidden on `#root`; header wrap; summary 2-col; actions wrap; ~44px touch targets on actions/stars
+- Labels, focus-visible, aria-busy on pending, status badges not color-only (text retained), star accessible names
+
+### T-108 Low cleanup
+
+- Low A: Menu price UI validates after trim; whitespace-only → empty/null like service
+- Low B: MenuReviewPanel create/update returns `{ aborted: true }` on stale; form skips success side effects; pending cleared when still mounted
+
+### Files
+
+- Created: `RatingStars.jsx`
+- Updated: `VisitEditor`, `MenuReviewForm`, `MenuReviewPanel`, `RestaurantList`, `TopRatedList`, `AuthForm`, `App.jsx`, `App.css`, `index.css`, `index.html`
+- Docs: `DECISION_LOG` D-007/D-008, `TASK_BOARD`, `WORK_LOG`, `gini-chat`
+
+### Validation
+
+- Rating normalize smoke: null/0/6/1.5/"4" → null; 1/3/5 ok
+- lint pass · production build pass (Vite 8.1.4)
+- `git diff --check` pass (CRLF warnings only)
+- package/migration diffs: none
+- secret scan on touched paths: no matches
+
+### Owner unverified (browser)
+
+1–12 from Toby T-110 plan (desktop theme, Visit/Menu stars, mobile overflow, keyboard, CRUD/dashboard regression, persistence)
+
+### Status
+
+T-110 → `REVIEW` (not DONE). Hank review requested.
+
+— Gini
+
+---
+
 ## 2026-07-18 — Gini — T-109 GitHub checkpoint
 
 ### Goal

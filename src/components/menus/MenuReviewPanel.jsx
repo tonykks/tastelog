@@ -5,6 +5,7 @@ import {
   getMenuReviews,
   updateMenuReview,
 } from '../../services/menuReviewService'
+import RatingStars from '../common/RatingStars'
 import MenuReviewForm from './MenuReviewForm'
 
 function sortMenuReviews(menuReviews) {
@@ -82,7 +83,11 @@ function MenuReviewPanel({ restaurant, userId, onClose }) {
     const requestId = ++createRequestIdRef.current
     setCreating(true)
     const result = await createMenuReview({ userId, restaurantId: restaurant.id, values })
-    if (!isMountedRef.current || requestId !== createRequestIdRef.current) return null
+    if (!isMountedRef.current) return { aborted: true }
+    if (requestId !== createRequestIdRef.current) {
+      setCreating(false)
+      return { aborted: true }
+    }
 
     setCreating(false)
     if (result.error) return result.error
@@ -102,8 +107,10 @@ function MenuReviewPanel({ restaurant, userId, onClose }) {
       menuReviewId,
       values,
     })
-    if (!isMountedRef.current || mutationRequestIdsRef.current.get(menuReviewId) !== requestId) {
-      return null
+    if (!isMountedRef.current) return { aborted: true }
+    if (mutationRequestIdsRef.current.get(menuReviewId) !== requestId) {
+      clearPendingMutation(menuReviewId)
+      return { aborted: true }
     }
 
     mutationRequestIdsRef.current.delete(menuReviewId)
@@ -157,8 +164,14 @@ function MenuReviewPanel({ restaurant, userId, onClose }) {
           <h2 id="menu-review-title">{restaurant.display_name} 메뉴 기록</h2>
           <p>메뉴별 가격과 맛 평가를 여러 개 저장할 수 있습니다.</p>
         </div>
-        <button className="restaurant-action secondary" type="button" onClick={onClose} disabled={hasPendingMutation}>
-          닫기
+        <button
+          className="restaurant-action secondary panel-close-button"
+          type="button"
+          onClick={onClose}
+          disabled={hasPendingMutation}
+          aria-label="메뉴 기록 닫기"
+        >
+          ×
         </button>
       </div>
 
@@ -208,8 +221,8 @@ function MenuReviewPanel({ restaurant, userId, onClose }) {
                       <h3>{menuReview.menu_name}</h3>
                       <div className="menu-review-meta">
                         {menuReview.price !== null && <span>{formatPrice(menuReview.price)}</span>}
-                        {menuReview.taste_rating !== null && (
-                          <span>맛 평가 {menuReview.taste_rating}/5</span>
+                        {menuReview.taste_rating !== null && menuReview.taste_rating !== undefined && (
+                          <RatingStars value={menuReview.taste_rating} readOnly showNumeric />
                         )}
                       </div>
                     </div>

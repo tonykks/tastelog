@@ -35,7 +35,8 @@ function EnvErrorScreen() {
   return (
     <main className="screen center">
       <div className="auth-card">
-        <h1 className="auth-title">TasteLog</h1>
+        <h1 className="auth-title">다시갈집</h1>
+        <p className="auth-brand-secondary">TasteLog</p>
         <p className="auth-message error" role="alert">
           앱 환경설정이 완료되지 않아 시작할 수 없습니다.
         </p>
@@ -68,7 +69,8 @@ function SessionErrorScreen({ message }) {
   return (
     <main className="screen center">
       <div className="auth-card">
-        <h1 className="auth-title">TasteLog</h1>
+        <h1 className="auth-title">다시갈집</h1>
+        <p className="auth-brand-secondary">TasteLog</p>
         <p className="auth-message error" role="alert">
           {message}
         </p>
@@ -293,7 +295,10 @@ function SignedInScreen({ session }) {
   return (
     <div className="screen">
       <header className="app-header">
-        <span className="app-brand">TasteLog</span>
+        <div className="app-brand-block">
+          <span className="app-brand">다시갈집</span>
+          <span className="app-brand-secondary">TasteLog</span>
+        </div>
         <div className="app-header-user">
           <span className="app-user-email">{session.user?.email}</span>
           <button
@@ -301,6 +306,7 @@ function SignedInScreen({ session }) {
             className="signout-button"
             onClick={handleSignOut}
             disabled={signingOut}
+            aria-busy={signingOut}
           >
             {signingOut ? '로그아웃 중…' : '로그아웃'}
           </button>
@@ -309,7 +315,7 @@ function SignedInScreen({ session }) {
       <main className="app-main">
         <div className="restaurant-page-heading">
           <h1>내 맛집 기록</h1>
-          <p>기억나는 맛집 이름부터 저장해 보세요.</p>
+          <p>기억나는 이름만으로 빠르게 저장하고, 방문·메뉴·별점을 이어서 남겨 보세요.</p>
         </div>
         <RestaurantForm creating={creating} onCreate={handleCreate} />
         {!restaurantError && (

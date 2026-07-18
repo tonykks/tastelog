@@ -4,7 +4,7 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 ## Current priority
 
-- Phase: T-109 DONE — dashboard/filters checkpoint; await explicit T-110 start approval
+- Phase: T-110 DONE — await Owner/Toby approval before starting the next assigned task
 - Milestone: M1 foundation → M2 secure CRUD → M3 UX → M4 deploy/submit
 - Primary goal: 2026-07-18까지 배포 가능한 과제 1단계 완성
 
@@ -28,17 +28,17 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 | T-107 | Visit editor | DONE | Hank | Gini | visited fields/rating/revisit; unvisited nullable | No |
 | T-108 | Menu review CRUD | DONE | Hank | Gini | multiple menus, price/rating validation | No |
 | T-109 | Search/filter/rating sort/dashboard | DONE | Gini | Hank | keyword, status/revisit, ranking, summary | No |
-| T-110 | Responsive UI + accessibility/error states | BACKLOG | Gini | Hank | mobile/desktop, keyboard/labels, empty/error/loading | No |
+| T-110 | Responsive UI + accessibility/error states | DONE | Gini | Hank | mobile/desktop, keyboard/labels, empty/error/loading | No |
 | T-111 | Integrated security/regression test | BACKLOG | Hank | Any | T1–T10 evidence incl. second account | Yes for test accounts |
-| T-112 | README·AI/error logs·screenshots | BACKLOG | Toby | Owner | submission sections and evidence complete | No |
+| T-112 | README·AI/error logs·screenshots | BACKLOG | Toby | Owner | submission sections and evidence complete; integrate T-110 role/review/fix evidence | No |
 | T-113 | GitHub main + Vercel production | BACKLOG | Gini | Hank | build, env, deployed URL smoke test | Yes |
 | T-114 | Final acceptance audit | BACKLOG | Toby | Owner | all Phase 1 checklist, known limits disclosed | Yes |
 
 ## Immediate next action
 
-1. Wait for explicit Owner/Toby approval before starting T-110 Responsive UI + accessibility/error states.
-2. T-110 remains `BACKLOG` with Gini as Primary Implementer and Hank as Reviewer.
-3. Do not modify T-109 source, DB test data, migrations/packages, or Vercel while awaiting T-110 start approval.
+1. Owner/Toby approval 전까지 기존 BACKLOG task를 시작하거나 상태를 변경하지 않습니다.
+2. T-112는 T-110의 Gini/Hank 역할 분담과 review/fix 사례를 제출 증빙에 통합합니다.
+3. Git push 또는 Vercel 작업은 별도 Owner 승인 전까지 수행하지 않습니다.
 
 ## Known blockers / Owner inputs
 
@@ -55,6 +55,7 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 | ID | Result | By | Verified | Date |
 |---|---|---|---|---|
+| T-110 | Responsive/a11y DONE: Hank final Approve; focus/contrast/Auth, mobile action row, panel-header findings corrected; Owner 12-step browser verification passed | Gini | Owner + Hank | 2026-07-18 |
 | T-106 | Restaurant Update/Delete DONE: edit/cancel/validation/update persistence, delete confirm/cancel/cascade warning, Low edit-trigger fix; Hank final Approve | Gini | Owner + Hank | 2026-07-18 |
 | T-105 | Restaurant Read/Create DONE: own list states, name-only create, refresh persistence, stale-request guards; Hank final Approve | Gini | Owner + Hank | 2026-07-18 |
 | T-104 | Supabase client/Auth DONE: signup+email confirm+login/logout+refresh session+safe login error verified; Hank final Approve | Gini | Owner + Hank | 2026-07-17 |

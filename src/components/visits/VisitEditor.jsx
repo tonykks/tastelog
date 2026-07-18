@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { getRepresentativeVisit, saveVisitState } from '../../services/visitService'
+import RatingStars, { normalizeStarRating } from '../common/RatingStars'
 
 function toFormValues(visit) {
   return {
     visitedAt: visit?.visited_at ?? '',
-    overallRating: visit?.overall_rating?.toString() ?? '',
+    overallRating: normalizeStarRating(visit?.overall_rating),
     visitNote: visit?.visit_note ?? '',
     revisitIntention: Boolean(visit?.revisit_intention),
     revisitNote: visit?.revisit_note ?? '',
@@ -87,7 +88,7 @@ function VisitEditor({ restaurant, userId, onSaved, onCancel }) {
 
   if (loading) {
     return (
-      <section className="visit-editor" aria-labelledby="visit-editor-title">
+      <section className="visit-editor" aria-labelledby="visit-editor-title" aria-busy="true">
         <p className="restaurant-state" role="status">방문 기록을 불러오는 중…</p>
       </section>
     )
@@ -112,10 +113,16 @@ function VisitEditor({ restaurant, userId, onSaved, onCancel }) {
       <div className="visit-editor-heading">
         <div>
           <h2 id="visit-editor-title">{restaurant.display_name} 방문 기록</h2>
-          <p>대표 방문 1건을 기준으로 기록합니다.</p>
+          <p className="visit-editor-subtitle">대표 방문 1건을 표시합니다.</p>
         </div>
-        <button className="restaurant-action secondary" type="button" onClick={onCancel} disabled={saving}>
-          닫기
+        <button
+          className="restaurant-action secondary panel-close-button"
+          type="button"
+          onClick={onCancel}
+          disabled={saving}
+          aria-label="방문 기록 닫기"
+        >
+          ×
         </button>
       </div>
 
@@ -154,17 +161,12 @@ function VisitEditor({ restaurant, userId, onSaved, onCancel }) {
               disabled={saving}
             />
 
-            <label className="restaurant-label" htmlFor={`visit-rating-${restaurant.id}`}>전체 별점 (선택)</label>
-            <input
+            <RatingStars
               id={`visit-rating-${restaurant.id}`}
-              className="restaurant-input"
-              type="number"
-              min="1"
-              max="5"
-              step="1"
-              inputMode="numeric"
+              name={`visit-rating-${restaurant.id}`}
+              label="전체 별점 (선택)"
               value={values.overallRating}
-              onChange={(event) => updateValue('overallRating', event.target.value)}
+              onChange={(nextRating) => updateValue('overallRating', nextRating)}
               disabled={saving}
             />
 
@@ -206,7 +208,7 @@ function VisitEditor({ restaurant, userId, onSaved, onCancel }) {
 
         {errorMessage && <p className="auth-message error" role="alert">{errorMessage}</p>}
         <div className="restaurant-actions visit-editor-actions">
-          <button className="restaurant-action" type="submit" disabled={saving}>
+          <button className="restaurant-action" type="submit" disabled={saving} aria-busy={saving}>
             {saving ? '저장 중…' : '방문 기록 저장'}
           </button>
           <button className="restaurant-action secondary" type="button" onClick={onCancel} disabled={saving}>

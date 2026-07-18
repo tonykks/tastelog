@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import RatingStars, { normalizeStarRating } from '../common/RatingStars'
 
 const emptyValues = {
   menuName: '',
   price: '',
-  tasteRating: '',
+  tasteRating: null,
   memo: '',
 }
 
@@ -13,7 +14,7 @@ function toFormValues(menuReview) {
   return {
     menuName: menuReview.menu_name,
     price: menuReview.price?.toString() ?? '',
-    tasteRating: menuReview.taste_rating?.toString() ?? '',
+    tasteRating: normalizeStarRating(menuReview.taste_rating),
     memo: menuReview.memo ?? '',
   }
 }
@@ -21,14 +22,14 @@ function toFormValues(menuReview) {
 function validateValues(values) {
   if (!values.menuName.trim()) return '메뉴 이름을 입력해 주세요.'
 
-  if (values.price !== '') {
-    const price = Number(values.price)
+  const priceText = String(values.price ?? '').trim()
+  if (priceText !== '') {
+    const price = Number(priceText)
     if (!Number.isInteger(price) || price < 0) return '가격은 0 이상의 정수로 입력해 주세요.'
   }
 
-  if (values.tasteRating !== '') {
-    const tasteRating = Number(values.tasteRating)
-    if (!Number.isInteger(tasteRating) || tasteRating < 1 || tasteRating > 5) {
+  if (values.tasteRating !== null && values.tasteRating !== undefined && values.tasteRating !== '') {
+    if (!Number.isInteger(values.tasteRating) || values.tasteRating < 1 || values.tasteRating > 5) {
       return '맛 평가는 1에서 5 사이의 정수로 입력해 주세요.'
     }
   }
@@ -47,6 +48,7 @@ function MenuReviewForm({
 }) {
   const [values, setValues] = useState(() => toFormValues(initialMenuReview))
   const [errorMessage, setErrorMessage] = useState(null)
+  const errorId = `${idPrefix}-error`
 
   function updateValue(name, value) {
     setValues((currentValues) => ({ ...currentValues, [name]: value }))
@@ -61,9 +63,15 @@ function MenuReviewForm({
     }
 
     setErrorMessage(null)
-    const error = await onSubmit({ ...values, menuName: values.menuName.trim() })
-    if (error) {
-      setErrorMessage(error)
+    const result = await onSubmit({
+      ...values,
+      menuName: values.menuName.trim(),
+      price: String(values.price ?? '').trim(),
+      tasteRating: values.tasteRating,
+    })
+    if (result?.aborted) return
+    if (result) {
+      setErrorMessage(result)
       return
     }
 
@@ -82,6 +90,8 @@ function MenuReviewForm({
         onChange={(event) => updateValue('menuName', event.target.value)}
         disabled={pending}
         autoComplete="off"
+        aria-invalid={Boolean(errorMessage)}
+        aria-describedby={errorMessage ? errorId : undefined}
       />
 
       <div className="menu-review-grid">
@@ -100,17 +110,12 @@ function MenuReviewForm({
           />
         </div>
         <div>
-          <label className="restaurant-label" htmlFor={`${idPrefix}-taste`}>맛 평가 (선택, 1–5)</label>
-          <input
+          <RatingStars
             id={`${idPrefix}-taste`}
-            className="restaurant-input"
-            type="number"
-            min="1"
-            max="5"
-            step="1"
-            inputMode="numeric"
+            name={`${idPrefix}-taste`}
+            label="맛 평가 (선택)"
             value={values.tasteRating}
-            onChange={(event) => updateValue('tasteRating', event.target.value)}
+            onChange={(nextRating) => updateValue('tasteRating', nextRating)}
             disabled={pending}
           />
         </div>
@@ -125,9 +130,13 @@ function MenuReviewForm({
         disabled={pending}
       />
 
-      {errorMessage && <p className="auth-message error" role="alert">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="auth-message error" id={errorId} role="alert">
+          {errorMessage}
+        </p>
+      )}
       <div className="restaurant-actions">
-        <button className="restaurant-action" type="submit" disabled={pending}>
+        <button className="restaurant-action" type="submit" disabled={pending} aria-busy={pending}>
           {pending ? '저장 중…' : submitLabel}
         </button>
         {onCancel && (

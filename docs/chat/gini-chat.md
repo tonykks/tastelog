@@ -3,8 +3,183 @@
 ## Gini → Owner, Toby, Hank, Any
 
 - Date: 2026-07-18
+- Related: T-110 GitHub checkpoint
+- Status: **T-110 DONE — checkpoint commit/push authorized**
+- Primary: Gini · Reviewer: Hank
+
+### Checkpoint scope
+
+- Includes approved T-110 responsive/theme/accessibility UI, RatingStars, T-108 Low follow-up, Owner mobile findings, and related collaboration records.
+- Excludes `.env.local`, `dist/`, `node_modules/`, secrets, migration 001–003, package files, DB data, Vercel, and T-111+ work.
+- T-110 remains DONE; T-111+ remain BACKLOG and unstarted.
+
+### Verification
+
+- Existing accepted lint/build evidence retained; not rerun for this checkpoint.
+- `git diff --check`: pass (CRLF conversion warnings only).
+- Local GitHub checkpoint will use `feat: polish responsive accessible UI`.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-110 final closeout
+- Status: **T-110 DONE**
+- Primary: Gini · Reviewer: Hank
+
+### Approval evidence
+
+- Hank independent review and each narrow re-review: **Approve**
+- Owner 12-step desktop/mobile browser verification: **passed**
+- Findings resolved: RatingStars focus/contrast, 360px Auth card, four-card-action mobile row, and Visit/Menu × headers with accessible names and one-line subtitle
+
+### Final Owner data
+
+- `산방밀면`: visited, representative rating 4, revisit true
+- `밀면`: price 8500, taste rating 4, memo `담백하고 시원했습니다.`
+
+### Handoff
+
+- T-110 is `DONE`.
+- T-112 remains `BACKLOG` with Toby/Owner and will integrate the T-110 Gini/Hank role split plus review/fix evidence.
+- T-111+ existing statuses and roles are unchanged; do not start any task until Owner/Toby approval.
+- This closeout changed documentation only: no source, DB, migration, package, Git commit/push, or Vercel operation.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-110 Visit/Menu panel header UI
+- Status: **REVIEW maintained — narrow correction complete**
+- Primary: Gini · Reviewer: Hank
+
+### Result
+
+- VisitEditor close control: `×`, accessible name `방문 기록 닫기`
+- MenuReviewPanel close control: `×`, accessible name `메뉴 기록 닫기`
+- Both buttons use the scoped `panel-close-button` 44×44px target and retain existing visible focus outline
+- Visit subtitle: `대표 방문 1건을 표시합니다.`; mobile 13px `nowrap`
+
+### Validation
+
+- 360px static panel-header check: ~238px text area remains after the 44px close target and 8px gap; shortened Visit subtitle fits one line
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass
+- `git diff --check`: pass (existing CRLF conversion warnings only)
+- No close handler, save/cancel, CRUD, RatingStars, desktop layout, package, migration, commit, or push changes
+- T-110 remains `REVIEW`
+
+### Narrow review request
+
+Hank: please review only Visit/Menu panel headers at 360px: × visual labels, accessible names, 44px touch/focus behavior, subtitle one-line/overflow, and unchanged close behavior.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-110 mobile restaurant card action row
+- Status: **REVIEW maintained — narrow correction complete**
+- Primary: Gini · Reviewer: Hank
+
+### Result
+
+Mobile-only CSS now keeps the restaurant card's four actions (`수정` / `방문 기록` / `메뉴 기록` / `삭제`) in one row:
+
+- direct card-footer selector only; delete confirmation and other action rows unchanged
+- equal flex widths, 4px gap, 12px font, 4px horizontal padding
+- `white-space: nowrap`; existing 44px minimum height retained
+- 360px static width check: each action receives approximately 70.5px inside the ~294px card action container
+
+### Validation
+
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass
+- `git diff --check`: pass (existing CRLF conversion warnings only)
+- No JSX/event handler/CRUD/RatingStars/service/migration/package/Git changes
+- T-110 remains `REVIEW`; no commit or push
+
+### Narrow review request
+
+Hank: please review only the mobile restaurant-card action row at 360px: four buttons one line, no label wrapping, ≥44px touch target, no horizontal overflow, and no desktop/tablet or delete-confirmation regression.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-110 Hank findings correction — focus / contrast / Auth overflow
+- Status: **REVIEW maintained — narrow correction complete**
+- Primary: Gini · Reviewer: Hank
+- Review model: **Auto** (Cursor Agent; Composer-powered)
+
+### Corrections
+
+1. Visible keyboard focus on `.rating-star-option:has(input:focus-visible)`; disabled dim + not-allowed cursor; ★/☆ + underline non-color cue for selected
+2. Contrast: gold `#8a6500` ~5.33:1, empty `#6f6960` ~5.43:1, accent `#7a1fcc` ~7.25:1 (white); white-on-accent submit ~7.25:1
+3. `.auth-card { box-sizing: border-box }` — 360px outer width ~328px inside center padding
+
+### Checks
+
+- lint / build / correction-scoped diff-check: pass
+- No service/DB/migration/package/Git push changes; T-110 left **REVIEW**
+
+### Review request
+
+Hank: please narrow re-review only (1) visible keyboard focus, (2) recorded contrast ratios, (3) 360px Auth overflow.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-110 Responsive UI + accessibility + RatingStars
+- Status: **REVIEW — implementation and static checks complete**
+- Primary: Gini · Reviewer: Hank
+- Review model: **Auto** (Cursor Agent; Composer-powered)
+- Baseline HEAD: `376ee045cd4ace0ac40a2281015bebd124d39d17` (working-tree T-110 uncommitted)
+
+### Implementation summary
+
+- Brand: `다시갈집` + TasteLog; title `다시갈집 | TasteLog` (D-007/D-008 Accepted)
+- Theme: warm off-white + purple + gold stars + status badges + destructive red; plain CSS
+- `RatingStars` interactive + readonly; Visit/Menu inputs; card/Top5/menu readonly; integer 1–5 or null
+- Responsive ~360–desktop; a11y labels/focus/aria-busy; T-108 Low A price trim + Low B abort sentinel
+
+### Checks
+
+- lint · build · diff-check pass; normalize smoke pass; migration/package unchanged
+- T-110 left **REVIEW**, not DONE; no Git push / Vercel / Agent DB mutation
+
+### Review request
+
+Hank: please review RatingStars contract/a11y, theme application, responsive CSS, abort/price Low fixes, and regression risk to Visit/Menu/Dashboard.
+
+### Owner manual test
+
+Toby’s 12-step browser plan (theme, stars, mobile, keyboard, CRUD/dashboard regression, persistence).
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
 - Related: T-109 Search/filter/dashboard GitHub checkpoint
-- Status: **T-109 DONE — checkpoint commit/push in progress per Owner/Toby approval**
+- Status: **T-109 DONE — checkpoint commit/push completed** (`376ee04` / `feat: add restaurant dashboard and filters`)
 - Primary: Gini · Reviewer: Hank
 
 ### Checkpoint

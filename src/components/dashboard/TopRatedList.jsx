@@ -1,7 +1,9 @@
+import RatingStars from '../common/RatingStars'
+
 function TopRatedList({ items, loading }) {
   if (loading) {
     return (
-      <section className="dashboard-top-rated" aria-labelledby="top-rated-title">
+      <section className="dashboard-top-rated" aria-labelledby="top-rated-title" aria-busy="true">
         <h2 id="top-rated-title" className="dashboard-section-title">
           별점 Top 5
         </h2>
@@ -27,7 +29,7 @@ function TopRatedList({ items, loading }) {
                 {index + 1}
               </span>
               <span className="top-rated-name">{item.displayName}</span>
-              <span className="top-rated-rating">대표 별점 {item.rating}</span>
+              <RatingStars value={item.rating} readOnly showNumeric />
             </li>
           ))}
         </ol>
