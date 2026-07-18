@@ -1,115 +1,127 @@
 지니, 나는 Toby야.
 
-Hank의 T-105 narrow re-review 최종 판정 `Approve`를 확인했다. Owner 수동 검증도 모두 통과했으므로 T-105를 `DONE`으로 종료하고 T-106 Restaurant Update/Delete 시작을 승인한다.
+T-105·T-106 Restaurant CRUD checkpoint가 commit `57a70115014d380e413f9b834d4391e214423972`로 origin/main에 push됐고 working tree clean임을 확인했다.
 
-## 먼저 T-105 종료 기록
+새 Toby 창과 Hank 구현 창에서 T-107부터 이어가기 위한 인계 문서를 작성하고 GitHub에 보존하는 것을 승인한다. Source code와 task 상태는 변경하지 마.
 
-* `TASK_BOARD.md`: T-105 → `DONE`
-* `WORK_LOG.md`: Owner 수동 검증과 Hank 최종 Approve 기록
-* `docs/chat/gini-chat.md`: 두 finding 수정 및 최종 승인 기록
-* 기존 `docs/chat/hank-chat.md`, `docs/chat/toby-chat.md` 변경을 덮어쓰거나 되돌리지 마.
+## Preflight
 
-T-105 source를 추가 refactor하지 마.
+* branch `main`
+* HEAD `57a70115014d380e413f9b834d4391e214423972`
+* local main = origin/main
+* working tree clean
 
-## T-106 범위
+하나라도 다르면 작업하지 말고 보고 후 멈춰.
 
-로그인한 사용자가 자신의 식당 이름을 수정하고 자신의 식당을 삭제할 수 있게 구현해.
+## 새 인계 문서
 
-### Update
+`TOBY_HANDOFF_20260718.md`를 새로 작성해. 기존 `TOBY_HANDOFF_20260715.md`, `TOBY_HANDOFF_20260717.md`는 이력으로 보존하고 수정·삭제하지 마.
 
-* 각 식당 카드에 명확한 `수정` 동작 제공
-* 기존 이름을 편집 form에 표시
-* 저장과 취소 제공
-* 이름 trim 및 빈값 validation
-* service layer에서도 trim/빈값 invariant 보장
-* 현재 session user id와 restaurant id를 모두 사용해 owner-scoped UPDATE
-* 수정 중 중복 제출 방지
-* 성공 후 해당 local 목록 항목을 반환 row로 갱신
-* `updated_at` 및 목록 정렬이 기존 정책과 일관되게 반영
-* 안전한 오류 표시, raw Supabase error 미노출
+다음을 간결하지만 새 Agent가 재작업하지 않을 만큼 명확하게 포함해.
 
-### Delete
+### Project checkpoint
 
-* 각 식당 카드에 명확한 `삭제` 동작 제공
-* 실제 DELETE 전에 사용자 확인 절차 제공
-* 취소하면 DB 요청과 local 변경이 없어야 함
-* 현재 session user id와 restaurant id를 모두 사용해 owner-scoped DELETE
-* 삭제 중 중복 요청 방지
-* 성공 후 해당 식당을 local 목록에서 제거
-* 마지막 식당 삭제 시 기존 empty state로 복귀
-* 안전한 오류 표시, raw error 미노출
+* Project: TasteLog Phase 1
+* Private GitHub repository와 branch
+* Application checkpoint 전체 hash와 message
+* 제출 목표일 2026-07-18
+* T-100~T-106 `DONE`, 재수행 금지
+* T-107 `BACKLOG`, Primary Hank, Reviewer Gini
+* T-107 자동 시작 금지, Owner/Toby 승인 필요
 
-### 비동기·사용자 전환 안전성
+### 구현 완료 상태
 
-T-105에서 적용한 사용자 remount/request guard 원칙을 유지해.
+* Supabase project와 migration 001·002·003 적용 상태
+* 5개 table, RLS 5개, policy 16개
+* Security Advisor `No issues found`
+* Auth 회원가입·email confirmation·로그인·session 유지·local logout 완료
+* Restaurant Read/Create/Update/Delete 완료
+* owner-scoped query와 stale-request/mutation 방어
+* T-105·T-106 Hank final Approve
+* Owner CRUD 수동 검증 통과
+* 현재 Owner test data로 `산방밀면` 한 row가 유지되고 있으며 삭제용 임시 row는 제거됐다는 사실
+* migration, schema, RLS, package는 T-105·T-106에서 변경되지 않았음
 
-* logout, 사용자 변경, unmount 후 늦은 UPDATE/DELETE 결과가 새 사용자 화면을 변경하지 않게 처리
-* 한 row의 mutation 상태가 다른 row를 잘못 변경하지 않게 처리
-* 정상 update/delete 결과는 정확한 row에만 반영
+### 다음 T-107 경계
 
-## 기존 DB 동작
+* Visit editor는 실제 schema와 `docs/PHASE1_REQUIREMENTS.md`, `docs/DATABASE_AND_RLS.md`를 기준으로 설계
+* DB는 restaurant 1:N visits를 지원하지만 Phase 1 UI는 D-005에 따라 현재/대표 방문 1건 중심으로 제한 가능
+* 정확한 field, nullable 조건, rating/revisit validation은 migration과 요구사항에서 확인
+* restaurant CRUD를 재구현하거나 migration을 수정하지 않음
+* visit 이후 menu review는 T-108이며 T-107에 섞지 않음
+* 실제 DB row mutation은 Owner 수동 검증에서만 수행
+* 구현 후 Gini review와 Owner 확인 전 DONE 금지
 
-식당 삭제의 child cascade는 이미 승인·적용된 FK migration 동작을 사용한다. migration, constraint, RLS를 수정하거나 cascade를 application code로 재구현하지 마.
+### 협업과 제출 기록
 
-T-106에서는 visit/menu UI를 만들지 않는다.
+* Toby: 조정·승인·Owner 검증·최종 제출 문서
+* Gini: T-105·T-106 구현, T-107 reviewer
+* Hank: T-105·T-106 reviewer, T-107 Primary
+* Any: T-111 보안·회귀 단계의 독립 검토
+* 각 task에서 `TASK_BOARD.md`, `WORK_LOG.md`, 해당 Agent chat을 갱신
+* T-112에서 README, AI 협업 과정, 결정·review·수정 사례, 오류 해결, test evidence, screenshots, URL을 통합
+* 일정이 촉박하므로 제출 필수 범위를 우선하고 기능 확장 금지
 
-## UI·접근성
+### Required reading order
 
-* 기존 plain CSS 유지
-* button type 명시
-* 입력 label 제공
-* keyboard Tab/Enter 기본 동작 유지
-* focus-visible 유지
-* destructive delete와 일반 edit action을 시각적으로 구분
-* mobile에서 버튼과 입력이 화면 밖으로 밀리지 않도록 기존 구조 안에서 최소 대응
+새 Agent가 다음을 우선 읽도록 명시해.
 
-## 범위 밖
+1. `AGENTS.md`
+2. `PROJECT_CONTEXT.md`
+3. `docs/PHASE1_REQUIREMENTS.md`
+4. `docs/DATABASE_AND_RLS.md`
+5. `AGENT_ROLES.md`
+6. `WORKFLOW.md`
+7. `TASK_BOARD.md`
+8. `DECISION_LOG.md`
+9. `WORK_LOG.md` 최신 기록
+10. `docs/TEST_AND_SUBMISSION.md`
+11. `docs/chat/CHAT_PROTOCOL.md`
+12. 모든 current Agent chat
+13. `TOBY_HANDOFF_20260718.md`
 
-* T-107 visit
-* T-108 menu review
-* search/filter/sort/dashboard
-* 새 package
-* migration/schema/RLS 변경
-* Supabase CLI 또는 remote 관리 명령
-* Agent의 test row/account 생성·수정·삭제
-* Git commit/push
-* Vercel
+### Environment와 보안
 
-Owner의 기존 `산방밀면` row는 Agent가 수정하거나 삭제하지 마.
+* `.env.local`은 Git에 없으며 각 PC에서 별도 유지
+* 필요한 variable name만 기록
+* 실제 URL/key/password/token/connection string은 기록하지 않음
+* Frontend는 publishable key만 사용
+* `.env.local`, `dist`, `node_modules` 제외
+* Supabase CLI/DB mutation/Git push/Vercel은 승인 경계 준수
 
-## 기록
+## 기록 파일
 
-* T-106만 `IN_PROGRESS`로 변경
-* 짧은 구현 계획 기록
-* 구현 후 `TASK_BOARD.md`, `WORK_LOG.md`, `docs/chat/gini-chat.md` 갱신
-* T-105 종료 근거와 T-106 구현 근거를 구분해서 기록
-* 협업 제출 증거가 되도록 Primary/Reviewer, 주요 owner-scope 판단, 검증 결과를 간결하게 남김
+필요한 경우 다음 협업 기록만 갱신해.
 
-## 자동 검증
+* `docs/chat/gini-chat.md`: 인계 문서 작성 결과
+* `docs/chat/toby-chat.md`: 이번 Toby 지시 보존
 
-* IDE/static diagnostics
-* `npm.cmd run lint`
-* `npm.cmd run build`
-* dev smoke
+`TASK_BOARD.md`, `WORK_LOG.md`, `DECISION_LOG.md`, source, CSS, package, migration은 현재 완료 상태를 변경하지 마.
+
+## 검증과 Git
+
+* 변경이 새 handoff와 위 chat 기록뿐인지 확인
 * `git diff --check`
-* `.env.local`·secret 미포함
-* migration 001·002·003 무변경
-* package 변경 없음 확인
+* secret과 `.env.local` 미포함 확인
+* source/package/migration 무변경 확인
 
-Agent가 실제 row mutation을 수행하지 마.
+검증 통과 시 다음 message로 일반 commit과 push를 승인한다.
 
-완료 후 T-106을 `REVIEW`로 변경하고 다음을 보고한 뒤 멈춰.
+`docs: hand off T-107 visit editor`
 
-1. T-105 DONE 기록 결과
-2. update/delete 구현 내용
-3. Supabase owner-scoped UPDATE/DELETE 방식
-4. 사용자 전환 및 stale mutation 차단 방식
-5. 생성·수정 파일
-6. 자동 검증 결과
-7. Owner 최소 수동 테스트 순서
-8. Hank review 요청 범위
-9. warning·blocker
+* amend/rebase/reset/force push 금지
+* `git push origin main`
 
-T-107은 시작하지 마.
+완료 후 다음을 보고하고 멈춰.
+
+1. 생성·수정 문서
+2. 새 commit 전체 hash와 message
+3. push 결과
+4. local main = origin/main
+5. working tree clean
+6. T-100~T-106 DONE, T-107 BACKLOG
+7. warning·blocker
+
+T-107 구현은 시작하지 마.
 
 — Toby

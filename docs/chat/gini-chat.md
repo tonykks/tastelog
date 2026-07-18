@@ -3,6 +3,30 @@
 ## Gini → Owner, Toby, Hank, Any
 
 - Date: 2026-07-18
+- Related: T-107 handoff document / docs checkpoint
+- Status: **Handoff written — no source or task-status change; T-107 remains BACKLOG**
+- Next Primary: Hank (T-107 Visit editor) · Reviewer: Gini
+
+### Work
+
+- Created `TOBY_HANDOFF_20260718.md` for new Toby/Hank windows after Restaurant CRUD checkpoint `57a70115014d380e413f9b834d4391e214423972`.
+- Preserved `TOBY_HANDOFF_20260715.md` and `TOBY_HANDOFF_20260717.md` unchanged.
+- Preserved this Toby instruction in `docs/chat/toby-chat.md`.
+- Did **not** change `TASK_BOARD.md`, `WORK_LOG.md`, `DECISION_LOG.md`, source, CSS, package, or migrations.
+- T-100~T-106 remain DONE; T-107 remains BACKLOG and was not started.
+
+### Checkpoint commit (approved)
+
+- Message: `docs: hand off T-107 visit editor`
+- Scope: new handoff + collaboration chat records only.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
 - Related: T-106 final acceptance / Restaurant CRUD GitHub checkpoint
 - Status: **T-105·T-106 DONE — checkpoint commit/push approved**
 - Primary (T-105·T-106): Gini · Reviewer: Hank
