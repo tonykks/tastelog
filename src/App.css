@@ -240,6 +240,119 @@
   margin: 0;
 }
 
+.dashboard-section-title {
+  margin: 0 0 12px;
+  color: var(--text-h);
+  font-size: 18px;
+}
+
+.dashboard-summary,
+.dashboard-top-rated,
+.restaurant-controls {
+  margin-bottom: 20px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.summary-card-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.summary-card {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.summary-card-label {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.summary-card-value {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.top-rated-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.top-rated-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.top-rated-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.top-rated-name {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.top-rated-rating {
+  font-size: 14px;
+}
+
+.restaurant-controls-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.restaurant-control-field .restaurant-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.restaurant-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.restaurant-filter-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.restaurant-sort-select {
+  flex: none;
+}
+
 .restaurant-form {
   padding: 20px;
   margin-bottom: 24px;
@@ -567,7 +680,9 @@
 .restaurant-input:focus-visible,
 .restaurant-submit:focus-visible,
 .retry-button:focus-visible,
-.restaurant-action:focus-visible {
+.restaurant-action:focus-visible,
+.restaurant-filter-option input:focus-visible,
+.restaurant-sort-select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -629,5 +744,17 @@
 
   .menu-review-meta {
     justify-content: flex-start;
+  }
+
+  .summary-card-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .top-rated-item {
+    grid-template-columns: auto 1fr;
+  }
+
+  .top-rated-rating {
+    grid-column: 2;
   }
 }

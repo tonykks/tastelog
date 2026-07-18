@@ -9,6 +9,7 @@ function formatUpdatedAt(value) {
 
 function RestaurantList({
   restaurants,
+  ownerRestaurantCount = null,
   loading,
   errorMessage,
   onRetry,
@@ -99,9 +100,16 @@ function RestaurantList({
   }
 
   if (restaurants.length === 0) {
+    const hasOwnerRestaurants =
+      typeof ownerRestaurantCount === 'number'
+        ? ownerRestaurantCount > 0
+        : false
+
     return (
       <p className="restaurant-state">
-        아직 저장한 맛집이 없습니다. 기억나는 곳부터 이름만 빠르게 저장해 보세요.
+        {hasOwnerRestaurants
+          ? '조건에 맞는 맛집이 없습니다. 검색어나 필터를 바꿔 보세요.'
+          : '아직 저장한 맛집이 없습니다. 기억나는 곳부터 이름만 빠르게 저장해 보세요.'}
       </p>
     )
   }

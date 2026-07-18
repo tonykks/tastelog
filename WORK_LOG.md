@@ -4,6 +4,140 @@
 
 ---
 
+## 2026-07-18 — Gini — T-109 GitHub checkpoint
+
+### Goal
+
+Owner/Toby-approved T-109 Search/Filter/Rating sort/Dashboard source and collaboration records committed and pushed to Private GitHub `main`. T-110 not started.
+
+### Scope included
+
+- Source: `restaurantDashboard.js`, `SummaryCards.jsx`, `TopRatedList.jsx`, `RestaurantControls.jsx`, `App.jsx`, `App.css`, `RestaurantList.jsx`
+- Docs: `TASK_BOARD.md`, `WORK_LOG.md`, `docs/chat/gini-chat.md`, `docs/chat/hank-chat.md`, `docs/chat/toby-chat.md`
+- Excluded: `.env.local`, `dist/`, `node_modules/`, secrets, migrations 001·002·003, packages, Auth/Visit/Menu services
+
+### Next action
+
+T-109 `DONE`; T-110 `BACKLOG` pending explicit start approval.
+
+— Gini
+
+---
+
+## 2026-07-18 — Gini — T-109 final closeout
+
+### Final acceptance
+
+- Owner/Toby final approval after Gini implementation, Hank `Approve with changes`, Low finding correction, and Hank narrow re-review final `Approve`.
+- Keyword: trim · case-insensitive · `display_name` + `area_hint` + `category`.
+- Filters: 전체 / 미방문 / 방문함 / visited + `revisit_intention===true`.
+- Sort: 최근 수정순 `updated_at` DESC → `id` DESC; 별점 높·낮은순은 rated visited 우선 → rating DESC/ASC → `updated_at` DESC → `id` DESC; unrated/unvisited 후미.
+- Summary·Top 5: owner 전체 기준(keyword/filter 독립). Top 5 = visited + valid integer rating 1–5, max 5.
+- Hank Low: malformed `0`/string ratings treated as rated → fixed with `Number.isInteger(rating) && 1 <= rating <= 5`.
+- Owner browser verified counts, search (incl. whitespace / no-match), filters, sorts, Create/Update/Delete/Visit sync, Menu 무영향, refresh·logout/relogin persistence.
+- Accepted automated evidence: lint, production build, `git diff --check`, pure + malformed-rating smoke.
+
+### Final Owner data
+
+- Restaurant: `산방밀면` (1 row), `visited`
+- Representative visit: overall rating `4`, revisit intention `true`
+- Menu: `밀면` — price `8500`, taste_rating `4`, memo `담백하고 시원했습니다.`
+
+### Scope / next action
+
+T-109 is `DONE`; T-110 remains `BACKLOG` pending explicit Owner/Toby approval. Document-only closeout — no source, DB, migration/package, Git, or Vercel mutation.
+
+— Gini
+
+---
+
+## 2026-07-18 — Gini — T-109 Low finding: getRepresentativeRating guard
+
+### Finding (Hank)
+
+`getRepresentativeRating()` treated `0`, numeric strings, and nonnumeric strings as rated values.
+
+### Correction
+
+- Return rating only when `Number.isInteger(rating) && rating >= 1 && rating <= 5`
+- Otherwise `null` (including `0`, `6`, `-1`, `1.5`, `"4"`, `"좋음"`, null/undefined, missing summary)
+- Unvisited still excluded; `filterAndSortRestaurants` / `computeTopRated` structure unchanged
+
+### Validation
+
+- Pure smoke: integers 1/3/5 ok; invalids null; Top 5 excludes invalid; input immutable — pass
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- `git diff --check` on correction paths: pass
+- UI/DB/migration/package/service: not modified in this correction
+
+### Status
+
+T-109 remains `REVIEW`. Hank narrow re-review requested for `getRepresentativeRating` only.
+
+— Gini
+
+---
+
+## 2026-07-18 — Gini — T-109 Search/filter/sort/dashboard
+
+### Goal
+
+Existing owner-scoped `restaurants` + representative `visitSummaries`로 client-side 검색·상태 filter·대표 별점 정렬·요약 dashboard·Top 5를 제공한다. DB table/mutation/refetch를 추가하지 않는다.
+
+### Calculation rules (documented)
+
+- **Keyword:** trim + case-insensitive. Fields: `display_name`, `area_hint`, `category`. `recommendation_note` / menu memo 제외. Empty keyword = all.
+- **Filters (mutually exclusive):** 전체 / 미방문(`status==='unvisited'`) / 방문함(`visited`) / 다시 갈 의향 있음(`visited` AND summary.`revisit_intention===true`). Unvisited never enters revisit filter even if a historical visit remains elsewhere.
+- **Sort — 최근 수정순 (default):** `updated_at` DESC → `id` DESC
+- **Sort — 별점 높은순 / 낮은순:** rated visited first; then `overall_rating` DESC/ASC; tie `updated_at` DESC → `id` DESC; unvisited or null rating always after rated
+- **Summary counts:** full owner list (not keyword/filter subset): total / unvisited / visited / revisit(visited+intention)
+- **Top 5:** visited + non-null representative rating only; rating DESC → `updated_at` DESC → `id` DESC; max 5; independent of keyword/filter
+- Menu reviews are not used for ranking/counts
+
+### Files
+
+- Created: `src/utils/restaurantDashboard.js`
+- Created: `src/components/dashboard/SummaryCards.jsx`, `TopRatedList.jsx`
+- Created: `src/components/restaurants/RestaurantControls.jsx`
+- Updated: `src/App.jsx`, `RestaurantList.jsx` (filtered-empty copy), `App.css`
+- Records: `TASK_BOARD.md`, `WORK_LOG.md`, `docs/chat/gini-chat.md`
+
+### Local sync
+
+Create/Update/Delete/Visit-save already mutate `restaurants` / `visitSummaries`; derived dashboard recomputes on render. No extra list refetch. Menu CRUD does not touch those maps.
+
+### Validation
+
+- Pure utility smoke (node ESM): search trim/case, filters, rating null/unvisited last, tie-break, summary, Top 5, input immutability — pass
+- IDE diagnostics: none on touched files
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- `git diff --check`: pass (CRLF warnings only)
+- Protected scope: no migration/package/service/Visit/Menu/Auth diffs
+- Secret scan on T-109 paths: no matches
+
+### Unverified (Owner browser)
+
+1. Dashboard counts match current data
+2. display_name (+ area/category) keyword search
+3. No-match empty vs owner-empty
+4. All four filters
+5. Updated sort + rating high/low + unrated last
+6. Rating tie order
+7. Top 5 set/order/max 5
+8. CRUD + Visit immediate recompute
+9. Menu CRUD no dashboard effect
+10. Refresh + logout/relogin
+
+### Status
+
+T-109 → `REVIEW` (not DONE). Hank review requested.
+
+— Gini
+
+---
+
 ## 2026-07-18 — Gini — T-108 GitHub checkpoint
 
 ### Goal

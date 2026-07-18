@@ -3,8 +3,108 @@
 ## Gini → Owner, Toby, Hank, Any
 
 - Date: 2026-07-18
+- Related: T-109 Search/filter/dashboard GitHub checkpoint
+- Status: **T-109 DONE — checkpoint commit/push in progress per Owner/Toby approval**
+- Primary: Gini · Reviewer: Hank
+
+### Checkpoint
+
+- Message: `feat: add restaurant dashboard and filters`
+- Includes approved T-109 source (`restaurantDashboard` utils, SummaryCards, TopRatedList, RestaurantControls, App/List/CSS) and collaboration docs.
+- Excludes `.env.local`, `dist/`, `node_modules/`, secrets; migrations 001·002·003, packages, Auth/Visit/Menu services unchanged.
+- T-110 remains `BACKLOG` and is not started. No Vercel/DB mutation.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-109 final closeout
+- Status: **DONE — Owner/Toby final approval received**
+- Primary: Gini · Reviewer: Hank
+
+T-109 is closed with Hank final `Approve` (after Low `getRepresentativeRating` integer 1–5 guard), Owner browser verification, and accepted lint/build/diff/smoke evidence. Summary and Top 5 stay on full owner data; list search/filter/sort remain client-side derived only.
+
+Final Owner data: `산방밀면` visited, representative rating 4, revisit true; menu `밀면` (8500 / 4 / memo preserved).
+
+T-110 remains `BACKLOG` with Gini as Primary Implementer and Hank as Reviewer. Gini will not start T-110 until Owner/Toby explicitly approves it. No source, DB, migration/package, Git, or Vercel operation in this document-only closeout.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-109 Low finding correction — `getRepresentativeRating`
+- Status: **REVIEW maintained — narrow correction complete** (superseded by final closeout above)
+- Primary: Gini · Reviewer: Hank
+- Review model: **Auto** (Cursor Agent; Composer-powered)
+
+### Correction
+
+- `getRepresentativeRating()` now returns a value only when `Number.isInteger(rating) && rating >= 1 && rating <= 5`
+- Otherwise `null` (`0`, `6`, `-1`, `1.5`, `"4"`, `"좋음"`, null/undefined, missing summary)
+- Unvisited exclusion unchanged; sort/Top 5 helpers unchanged structurally — invalid ratings fall through as unrated / excluded from Top 5
+
+### Checks
+
+- Pure smoke: pass
+- lint / production build / correction-scoped `git diff --check`: pass
+- No UI, DB, migration, package, or service edits in this correction
+- T-109 left **REVIEW**
+
+### Review request
+
+Hank: please narrow re-review only this `getRepresentativeRating` integer 1–5 guard.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-109 Search/filter/rating sort/dashboard
+- Status: **REVIEW — implementation and static checks complete**
+- Primary: Gini · Reviewer: Hank
+- Review model: **Auto** (Cursor Agent; Composer-powered)
+- Baseline HEAD: `10c2184f33dcab2c92944db8cc14bc7f8f9c007f` (working-tree T-109 uncommitted)
+
+### Implementation summary
+
+- Pure helpers in `src/utils/restaurantDashboard.js`; UI: `SummaryCards`, `TopRatedList`, `RestaurantControls`.
+- App derives summary / Top 5 / visible list from existing `restaurants` + `visitSummaries` only — no new queries or mutations.
+- Keyword: `display_name` + `area_hint` + `category` (documented; note/menu excluded).
+- Filters: 전체 · 미방문 · 방문함 · 다시 갈 의향 있음 (visited + `revisit_intention`).
+- Sort: 최근 수정순 / 별점 높은순 / 별점 낮은순 with rated-first and `updated_at`→`id` tie-break.
+- Summary + Top 5 use full owner data (ignore current keyword/filter). Counts show `0` when empty; loading shows “준비 중…” instead of fake zeros.
+- Filtered empty copy distinct from owner-empty. Restaurant query error keeps prior retry UI; summary failure still yields empty map → rating/revisit features safely shrink.
+
+### Checks
+
+- lint pass · production build pass · `git diff --check` pass
+- migration/package/Auth/Visit/Menu services unchanged
+- no Agent DB mutation, Git push, or Vercel
+- T-109 left **REVIEW**, not DONE
+
+### Review request
+
+Hank: please review owner-scope derivation only (no extra fetches), filter/sort/Top 5 rules, empty/loading boundaries, CRUD/Visit local sync, and protected-scope compliance.
+
+Owner: browser sequence in Toby prompt / WORK_LOG (existing data only; Agent creates no rows).
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
 - Related: T-108 Menu review CRUD GitHub checkpoint
-- Status: **T-108 DONE — checkpoint commit/push in progress per Owner/Toby approval**
+- Status: **T-108 DONE — checkpoint commit/push completed** (`10c2184` / `feat: complete menu review CRUD`)
 - Primary: Hank · Reviewer: Gini
 
 ### Checkpoint

@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { missingEnvVars } from './lib/supabase'
 import { getInitialSession, onAuthStateChange, signOut } from './services/authService'
 import AuthForm from './components/auth/AuthForm'
+import SummaryCards from './components/dashboard/SummaryCards'
+import TopRatedList from './components/dashboard/TopRatedList'
+import RestaurantControls from './components/restaurants/RestaurantControls'
 import RestaurantForm from './components/restaurants/RestaurantForm'
 import RestaurantList from './components/restaurants/RestaurantList'
 import MenuReviewPanel from './components/menus/MenuReviewPanel'
@@ -13,6 +16,13 @@ import {
   updateRestaurant,
 } from './services/restaurantService'
 import { getRepresentativeVisitSummaries } from './services/visitService'
+import {
+  SORT_OPTIONS,
+  STATUS_FILTERS,
+  computeDashboardSummary,
+  computeTopRated,
+  filterAndSortRestaurants,
+} from './utils/restaurantDashboard'
 import './App.css'
 
 function sortRestaurantsByUpdatedAt(restaurants) {
@@ -88,6 +98,9 @@ function SignedInScreen({ session }) {
   const [activeVisitRestaurantId, setActiveVisitRestaurantId] = useState(null)
   const [activeMenuRestaurantId, setActiveMenuRestaurantId] = useState(null)
   const [visitSummaries, setVisitSummaries] = useState({})
+  const [searchKeyword, setSearchKeyword] = useState('')
+  const [statusFilter, setStatusFilter] = useState(STATUS_FILTERS.ALL)
+  const [sortOption, setSortOption] = useState(SORT_OPTIONS.UPDATED)
 
   useEffect(() => {
     isMountedRef.current = true
@@ -243,6 +256,19 @@ function SignedInScreen({ session }) {
     (restaurant) => restaurant.id === activeMenuRestaurantId,
   )
 
+  const dashboardReady = !restaurantsLoading && !restaurantError
+  const dashboardSummary = dashboardReady
+    ? computeDashboardSummary(restaurants, visitSummaries)
+    : null
+  const topRatedItems = dashboardReady ? computeTopRated(restaurants, visitSummaries) : []
+  const visibleRestaurants = dashboardReady
+    ? filterAndSortRestaurants(restaurants, visitSummaries, {
+        keyword: searchKeyword,
+        filter: statusFilter,
+        sort: sortOption,
+      })
+    : []
+
   function handleOpenVisit(restaurantId) {
     setActiveMenuRestaurantId(null)
     setActiveVisitRestaurantId(restaurantId)
@@ -286,8 +312,25 @@ function SignedInScreen({ session }) {
           <p>기억나는 맛집 이름부터 저장해 보세요.</p>
         </div>
         <RestaurantForm creating={creating} onCreate={handleCreate} />
+        {!restaurantError && (
+          <>
+            <SummaryCards summary={dashboardSummary} loading={restaurantsLoading} />
+            <TopRatedList items={topRatedItems} loading={restaurantsLoading} />
+          </>
+        )}
+        {dashboardReady && restaurants.length > 0 && (
+          <RestaurantControls
+            keyword={searchKeyword}
+            filter={statusFilter}
+            sort={sortOption}
+            onKeywordChange={setSearchKeyword}
+            onFilterChange={setStatusFilter}
+            onSortChange={setSortOption}
+          />
+        )}
         <RestaurantList
-          restaurants={restaurants}
+          restaurants={dashboardReady ? visibleRestaurants : restaurants}
+          ownerRestaurantCount={dashboardReady ? restaurants.length : null}
           loading={restaurantsLoading}
           errorMessage={restaurantError}
           onRetry={loadRestaurants}

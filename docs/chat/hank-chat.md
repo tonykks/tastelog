@@ -3,6 +3,115 @@
 ## Hank → Owner, Toby, Gini, Any
 
 - Date: 2026-07-18
+- Related task: T-109 `getRepresentativeRating` Low finding narrow re-review
+- Status: **REVIEW — Approve**
+
+### 1. Final verdict
+
+**Approve**
+
+Low finding은 최소 수정으로 해결됐습니다. T-109은 `REVIEW`로 유지합니다.
+
+### 2. Valid·invalid verification
+
+- `getRepresentativeRating`은 visited Restaurant의 rating이 `Number.isInteger(rating) && rating >= 1 && rating <= 5`를 모두 만족할 때만 값을 반환합니다.
+- `null`, `undefined`, missing summary, `0`, `6`, `-1`, `1.5`, `"4"`, `"좋음"`은 모두 `null`로 처리됨을 독립 Node ESM smoke로 확인했습니다.
+- 정수 `1`, `3`, `5`는 각각 그대로 반환됩니다.
+
+### 3. Downstream regression
+
+- invalid rating은 rated-first 그룹에 들어가지 않고 Top 5에서도 제외됩니다.
+- valid rating의 높은순 정렬과 Top 5 순서는 유지됩니다.
+- unvisited Restaurant은 historical valid rating이 있어도 rating 대상에서 제외됩니다.
+- helper 실행 전후 `restaurants` 배열과 `visitSummaries` 객체 직렬화 값이 동일해 input mutation이 없습니다.
+- `filterAndSortRestaurants`와 `computeTopRated` 구조에는 finding 수정 외 refactor가 없습니다.
+
+### 4. Checks acceptance
+
+- 독립 narrow pure smoke: pass.
+- Gini의 pure smoke, lint, production build, correction-scoped `git diff --check` pass는 현재 guard와 실제 결과가 일치하므로 수용하며 재실행하지 않았습니다.
+
+### 5. Out-of-scope confirmation
+
+- 이전 T-109 working-tree 범위 외 UI, DB, migration 001·002·003, package/lock, service, Auth/Visit/Menu 변경은 없습니다.
+- T-110+, Agent DB mutation, Supabase CLI/network, Git commit/push, Vercel 작업을 수행하지 않았습니다.
+- Reviewer는 source/common status를 수정하지 않았고 이 Hank chat 기록만 추가했습니다.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-109 Search/filter/rating sort/dashboard independent review
+- Status: **REVIEW — Approve with changes**
+
+### 1. Final verdict
+
+**Approve with changes**
+
+정상적인 DB-backed T-109 입력에서는 search/filter/sort/count/Top 5, CRUD·Visit local sync, loading/error/empty 격리가 요구사항과 일치합니다. 다만 malformed 대표 평점 `0` 또는 문자열을 rated로 오인하는 Low finding 1건은 최소 방어 후 closeout하는 편이 안전합니다. T-109은 `REVIEW`로 유지합니다.
+
+### 2. Passed items
+
+- 기존 owner-scoped `restaurants`와 `visitSummaries`만 사용하며 새 Supabase query/mutation/refetch, menu-derived count/ranking, 원본 배열 mutation이 없습니다.
+- 검색은 trim/case-insensitive이며 `display_name`·`area_hint`·`category`만 대상으로 하고 null 필드와 빈 keyword에 안전합니다. owner-empty와 filtered-empty 문구도 구분됩니다.
+- 필터는 all/unvisited/visited/revisit 규칙과 정확히 일치합니다. historical summary가 있어도 unvisited row는 revisit/rated 대상에서 제외됩니다.
+- 최근 수정순과 rating tie-break는 `updated_at DESC → id DESC`입니다. invalid/missing date 차이는 `NaN`일 때 `||`의 id fallback으로 comparator가 숫자 결과를 반환해 deterministic합니다.
+- Summary는 전체 owner list 기준이며 current search/filter/sort와 독립적입니다. Top 5도 전체 owner list의 visited+non-null rating만 사용하고 최대 5개입니다.
+- 검색/filter/sort는 local state만 바꾸며 접근 가능한 label/radiogroup/current checked/select/focus-visible이 있습니다. star UI, editor/navigation, T-110 responsive redesign은 추가되지 않았습니다.
+
+### 3. Finding
+
+#### Finding 1 — malformed rating을 rated로 인정
+
+- Severity: **Low**
+- Location: `src/utils/restaurantDashboard.js:15` `getRepresentativeRating` (downstream: `filterAndSortRestaurants`, `computeTopRated`)
+- Actual risk: 함수는 `null`/`undefined`만 제외하고 `0`, `"4"`, 비수치 문자열도 그대로 반환합니다. 따라서 예상 밖 local/API shape가 들어오면 0이나 문자열이 rated-first 정렬과 Top 5에 포함되고 raw 값이 표시될 수 있습니다. 현재 DB `smallint` + 1–5 CHECK와 Visit 입력 validation이 정상 저장 경로를 막으므로 데이터 무결성 위험은 낮지만, Toby가 요청한 pure boundary는 충족하지 않습니다.
+- Minimum fix: 대표 평점을 `Number.isInteger(rating) && rating >= 1 && rating <= 5`일 때만 반환하고 그 외에는 `null`로 처리합니다. `0`, numeric string, nonnumeric string 회귀 smoke를 추가하면 충분하며 Owner DB data 생성은 필요 없습니다.
+
+### 4. Search/filter/sort/count/Top 5 verification
+
+- 독립 Node ESM smoke에서 null area/category, whitespace/case keyword, visited rated/revisit, visited unrated, unvisited+historical rating, rating order, updated/id tie, 7개 row의 Top 5, input 불변성, missing summary key, invalid dates를 확인했습니다. 정상 사례와 invalid-date fallback은 통과했습니다.
+- 같은 smoke에서 `getRepresentativeRating`이 `0`과 `"4"`를 그대로 반환하는 것을 재현했습니다. Finding 1 외 count/order/filter 규칙은 source와 계산 결과가 일치합니다.
+- 빈 배열은 helper loop/filter/map/slice 구조상 total 0, empty list로 안전하며 UI는 0 counts와 rated-empty copy를 구분합니다.
+
+### 5. CRUD·Visit local sync
+
+- Restaurant Create/Update/Delete가 기존 `restaurants` state를 갱신하면 derived summary, visible list, ordering, Top 5가 다음 render에서 즉시 재계산됩니다.
+- Visit save가 restaurant status와 `visitSummaries`를 함께 갱신하므로 rating/revisit filter, counts, Top 5가 즉시 바뀌며 unvisited 전환은 historical summary가 남아도 rated/revisit 대상에서 제외됩니다.
+- Menu CRUD는 두 source state를 변경하지 않으며 dashboard에 영향을 주지 않습니다. 이를 위한 전체 DB refetch도 없습니다.
+
+### 6. Loading/error/empty boundaries
+
+- initial loading은 Summary/Top 5의 준비 문구를 표시하고 확정된 0을 노출하지 않습니다. Restaurant query error에서는 dashboard를 숨기고 기존 retry UI를 유지합니다.
+- representative-summary failure는 기존 빈 map fallback으로 Restaurant 목록을 유지하고 rating/revisit/Top 5만 안전하게 축소합니다.
+- owner-empty와 filtered-empty copy가 다르며 raw error, stack, 환경값, secret 노출은 발견되지 않았습니다.
+
+### 7. Checks and evidence acceptance
+
+- Gini의 lint pass, production build pass, `git diff --check` pass, pure smoke pass는 실제 diff 및 독립 계산 결과와 일치하는 범위에서 수용합니다.
+- 독립 smoke의 앞선 두 호출은 export명/인자명 착오로 product assertion 전에 실패했으며, source/data 변경 없이 실제 signature로 재실행해 위 결과를 얻었습니다.
+
+### 8. Owner manual test plan
+
+- WORK_LOG의 10단계 계획은 실제 DB-backed 데이터에서 counts, search/filter/sort, tie, Top 5, CRUD·Visit 즉시 재계산, Menu 무영향, persistence를 확인하기에 충분합니다.
+- Finding 1은 DB 제약상 Owner가 invalid row를 만들 필요가 없으며, 최소 수정 뒤 local pure smoke로 닫는 것이 적절합니다.
+
+### 9. Out-of-scope confirmation
+
+- Baseline HEAD는 `10c2184f33dcab2c92944db8cc14bc7f8f9c007f`와 일치합니다.
+- package/lock, migrations 001·002·003, services, Auth/Visit/Menu components에는 T-109 diff가 없습니다. T-110+ 구현, Agent DB mutation, Supabase CLI/network, Git commit/push, Vercel 작업도 수행하지 않았습니다.
+- Reviewer는 source/common status를 수정하지 않았고 이 Hank chat 기록만 추가했습니다.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
 - Related task: T-108 final closeout
 - Status: **DONE — Owner/Toby final approval received**
 
