@@ -84,6 +84,47 @@ T-103 is not started.
 
 ## Hank → Owner, Toby, Gini, Any
 
+- Date: 2026-07-18
+- Related task: T-105 Restaurant Read/Create narrow code review
+- Status: Review complete
+
+### Final verdict
+
+**Approve with changes**
+
+### Passed review points
+
+- `getRestaurants()` scopes the query to the signed-in session's supplied `userId` and the applied `user_restaurants` owner RLS remains the enforcement boundary. `createRestaurant()` writes only `user_id` and `display_name`; nullable `place_id` is not required. No service-role client or RLS bypass was added.
+- Database errors are converted to fixed Korean messages before rendering. The reviewed restaurant path neither renders raw Supabase errors nor logs environment values, keys, or session objects.
+- The list has distinct loading, empty, and safe-error/retry states. The form has an associated label, visible keyboard focus, `type="submit"`, and disabled input/button while creation is pending. It validates the blank/whitespace-only UI input before the DB call.
+- A successful insert is selected through the existing owner-visible policy and prepended, which is consistent with the descending `updated_at` list ordering. No edit/delete, visit/menu, or search/dashboard behavior was introduced.
+
+### Findings
+
+#### 1. Previous user's list can remain or win during a direct session-user change
+
+- Severity: Medium
+- File/location: `src/App.jsx:60-93`, especially `loadRestaurants()` at lines 69-81
+- Problem and actual risk: `SignedInScreen` is retained when its `session` prop changes from one authenticated user to another. It neither clears the old `restaurants` state nor invalidates an in-flight request. If this happens without an intervening logged-out render, user B can briefly see user A's already loaded card; a slower A request can also resolve after B's request and overwrite B's list. RLS prevents a new cross-user read, but it cannot retract rows already held in browser state.
+- Minimum recommendation: On `userId` change, clear `restaurants` and error state before loading; guard each request with an active/request-id check (or equivalent cancellation) so only the current user/request can commit its result. Apply the same guard to the create completion path if the auth state can change while an insert is pending.
+
+#### 2. Service does not itself guarantee its advertised trimmed name invariant
+
+- Severity: Low
+- File/location: `src/services/restaurantService.js:27-35`
+- Problem and actual risk: The current form trims and rejects blanks, but `createRestaurant()` inserts its `displayName` argument verbatim. A future caller can therefore bypass the form invariant and submit leading/trailing whitespace or a whitespace-only name, relying on a generic database error rather than the required client validation. This conflicts with the requested service-level review criterion of inserting a trimmed name.
+- Minimum recommendation: Normalize with `const trimmedName = displayName.trim()` inside `createRestaurant()` and reject an empty value there with the same safe validation message (or make the service accept only an already validated value through an explicit contract plus test). Keep the form validation for immediate feedback.
+
+### Remaining Owner confirmation
+
+The Owner's recorded name-only create, immediate list update, refresh persistence, and logout/relogin checks satisfy the requested manual boundary. After Gini resolves the two findings and Hank re-reviews only those changes, Toby/Owner may decide whether to close T-105. I did not change T-105 status, source, SQL, common documents, Git, external services, or start T-106.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
 - Date: 2026-07-17
 - Related task: T-104 / D-014 security hardening migration review
 - Status: Review complete
@@ -537,5 +578,76 @@ All three previously accepted Low findings are resolved. No new findings in the 
    - No custom keyboard handler, `tabIndex`, or role overrides were introduced, so native Tab focus and Enter/Space button activation remain available; the existing visible `:focus-visible` style continues to apply.
 
 Per Toby's narrow-review instruction, I did not repeat lint/build, dependency audit, migration/hash/history checks, network commands, or Supabase CLI operations. No code, SQL, database, or common document was changed by Hank.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-105 two-findings narrow re-review
+- Status: Review complete
+
+### Final verdict
+
+**Approve**
+
+Both prior findings are resolved; no new issue was found in the requested narrow scope.
+
+- `src/App.jsx:60-115,205`: `key={session.user.id}` remounts the signed-in surface for a different authenticated user. The unmount cleanup invalidates both request counters and sets the old component's mount flag to false. Each list/retry request gets a new list id, and each create gets a new create id; only the current mounted component's newest corresponding request can update state. Therefore old A SELECT/create completions cannot populate B's screen, while the current initial load, retry, and successful create retain their normal state updates and loading completion.
+- `src/services/restaurantService.js:27-40`: `createRestaurant()` normalizes with `String(displayName ?? '').trim()` before any Supabase call, returns the specified fixed Korean validation contract for blank input, and inserts only the normalized value. The existing form validation and safe raw-error mapping remain intact.
+- The diff contains no T-106 update/delete behavior and does not expand the T-105 data/error scope.
+
+Per Toby's instruction, I did not rerun lint, build, dev smoke, audit, Supabase CLI/network/remote DB operations, or create test data. No source, SQL, common document/status, Git, or external service was changed by Hank. T-106 was not started.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-106 Restaurant Update/Delete narrow code review
+- Status: Review complete
+
+### Final verdict
+
+**Approve with changes**
+
+### Passed review points
+
+- `src/services/restaurantService.js:43-72` applies both `id` and current `user_id` filters to UPDATE and DELETE. Update normalizes/rejects blank names before its DB request; both operations use `maybeSingle()` and convert an error **or no returned row** to the existing safe user-facing error contract.
+- `src/App.jsx:146-190` replaces only the returned row and re-sorts by `updated_at`, or removes only the server-returned deleted id. The per-row request map, mount flag, keyed signed-in screen, and cleanup prevent stale UPDATE/DELETE completions from modifying a new user or unmounted screen. Current initial loads, retries, and mutations retain a completion path, with no persistent loading state in the mounted screen.
+- `src/components/restaurants/RestaurantList.jsx:38-77,181-206` performs no mutation on edit/delete cancellation. The confirmation names the target restaurant and accurately warns that its related visit/menu records are deleted by the applied restaurant-owned FK cascades. Labels, disabled pending controls, focus-visible styling, and the distinct destructive action remain present. No T-107+ feature was added.
+
+### Finding
+
+#### 1. The existing edit trigger remains active while that row's inline edit form is open
+
+- Severity: Low
+- File/location: `src/components/restaurants/RestaurantList.jsx:25-30,111-150,163-180`
+- Problem and actual risk: While editing, the card still shows its original `수정` button. Activating it calls `beginEdit()` again and resets `editingName` to the persisted restaurant name, silently discarding the user's unsaved typed change. This does not cause a remote mutation, but creates an avoidable action conflict and is especially confusing for keyboard users navigating the card controls.
+- Minimum recommendation: Hide or disable the card's `수정` trigger for `editingId === restaurant.id` (or make it a clearly labeled non-destructive reset with explicit confirmation). Keeping `삭제` available is acceptable if it intentionally cancels editing before opening the separate confirmation, as the current code does.
+
+Per Toby's efficiency limits, I did not rerun lint/build/dev smoke/audit or use Supabase CLI, network, remote DB, or test data. I changed no source, common document/status, Git, or external state, and did not start T-107.
+
+— Hank
+
+---
+
+## Hank → Owner, Toby, Gini, Any
+
+- Date: 2026-07-18
+- Related task: T-106 Low finding 1 narrow re-review
+- Status: Review complete
+
+### Final verdict
+
+**Approve**
+
+`src/components/restaurants/RestaurantList.jsx:163-182` now renders the card-level `수정` trigger only when `editingId !== restaurant.id`. Thus the edited card retains only the inline form's `저장`/`취소` editing controls plus its intentionally separate `삭제` path; pressing delete still clears edit state before confirmation. A non-editing card, including every other row, retains its normal `수정` trigger and `beginEdit(restaurant)` path. No finding-external behavior or T-107 scope was added.
+
+Per Toby's instruction, I did not repeat lint/build/smoke/audit or perform Supabase CLI, network, DB, source/common-document/status, or Git work. T-107 was not started.
 
 — Hank

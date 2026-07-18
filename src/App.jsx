@@ -1,8 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { missingEnvVars } from './lib/supabase'
 import { getInitialSession, onAuthStateChange, signOut } from './services/authService'
 import AuthForm from './components/auth/AuthForm'
+import RestaurantForm from './components/restaurants/RestaurantForm'
+import RestaurantList from './components/restaurants/RestaurantList'
+import {
+  createRestaurant,
+  deleteRestaurant,
+  getRestaurants,
+  updateRestaurant,
+} from './services/restaurantService'
 import './App.css'
+
+function sortRestaurantsByUpdatedAt(restaurants) {
+  return [...restaurants].sort(
+    (left, right) => new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime(),
+  )
+}
 
 function EnvErrorScreen() {
   return (
@@ -57,6 +71,124 @@ function SessionErrorScreen({ message }) {
 function SignedInScreen({ session }) {
   const [signingOut, setSigningOut] = useState(false)
   const [errorMessage, setErrorMessage] = useState(null)
+  const [restaurants, setRestaurants] = useState([])
+  const [restaurantsLoading, setRestaurantsLoading] = useState(true)
+  const [restaurantError, setRestaurantError] = useState(null)
+  const [creating, setCreating] = useState(false)
+  const userId = session.user.id
+  const isMountedRef = useRef(true)
+  const listRequestIdRef = useRef(0)
+  const createRequestIdRef = useRef(0)
+  const mutationRequestIdsRef = useRef(new Map())
+  const nextMutationRequestIdRef = useRef(0)
+  const [pendingMutations, setPendingMutations] = useState({})
+
+  useEffect(() => {
+    isMountedRef.current = true
+
+    return () => {
+      isMountedRef.current = false
+      listRequestIdRef.current += 1
+      createRequestIdRef.current += 1
+      mutationRequestIdsRef.current.clear()
+    }
+  }, [])
+
+  const loadRestaurants = useCallback(async () => {
+    const requestId = ++listRequestIdRef.current
+    setRestaurantsLoading(true)
+    setRestaurantError(null)
+
+    const { restaurants: nextRestaurants, error } = await getRestaurants(userId)
+    if (!isMountedRef.current || requestId !== listRequestIdRef.current) return
+
+    setRestaurants(nextRestaurants)
+    setRestaurantError(error)
+    setRestaurantsLoading(false)
+  }, [userId])
+
+  useEffect(() => {
+    loadRestaurants()
+    return () => {
+      listRequestIdRef.current += 1
+    }
+  }, [loadRestaurants])
+
+  async function handleCreate(displayName) {
+    const requestId = ++createRequestIdRef.current
+    setCreating(true)
+    const { restaurant, error } = await createRestaurant({ userId, displayName })
+    if (!isMountedRef.current || requestId !== createRequestIdRef.current) return null
+
+    setCreating(false)
+
+    if (error) return error
+
+    setRestaurants((currentRestaurants) => [restaurant, ...currentRestaurants])
+    setRestaurantError(null)
+    return null
+  }
+
+  function setPendingMutation(restaurantId, type) {
+    setPendingMutations((currentMutations) => ({
+      ...currentMutations,
+      [restaurantId]: type,
+    }))
+  }
+
+  function clearPendingMutation(restaurantId) {
+    setPendingMutations((currentMutations) => {
+      const { [restaurantId]: _removedMutation, ...remainingMutations } = currentMutations
+      return remainingMutations
+    })
+  }
+
+  async function handleUpdate(restaurantId, displayName) {
+    const requestId = ++nextMutationRequestIdRef.current
+    mutationRequestIdsRef.current.set(restaurantId, requestId)
+    setPendingMutation(restaurantId, 'updating')
+
+    const { restaurant, error } = await updateRestaurant({ userId, restaurantId, displayName })
+    if (!isMountedRef.current || mutationRequestIdsRef.current.get(restaurantId) !== requestId) {
+      return null
+    }
+
+    mutationRequestIdsRef.current.delete(restaurantId)
+    clearPendingMutation(restaurantId)
+    if (error) return error
+
+    setRestaurants((currentRestaurants) =>
+      sortRestaurantsByUpdatedAt(
+        currentRestaurants.map((currentRestaurant) =>
+          currentRestaurant.id === restaurant.id ? restaurant : currentRestaurant,
+        ),
+      ),
+    )
+    return null
+  }
+
+  async function handleDelete(restaurantId) {
+    const requestId = ++nextMutationRequestIdRef.current
+    mutationRequestIdsRef.current.set(restaurantId, requestId)
+    setPendingMutation(restaurantId, 'deleting')
+
+    const { restaurantId: deletedRestaurantId, error } = await deleteRestaurant({
+      userId,
+      restaurantId,
+    })
+    if (!isMountedRef.current || mutationRequestIdsRef.current.get(restaurantId) !== requestId) {
+      return null
+    }
+
+    mutationRequestIdsRef.current.delete(restaurantId)
+    clearPendingMutation(restaurantId)
+    if (error) return error
+
+    setRestaurants((currentRestaurants) =>
+      currentRestaurants.filter((restaurant) => restaurant.id !== deletedRestaurantId),
+    )
+    return null
+  }
 
   async function handleSignOut() {
     setSigningOut(true)
@@ -86,8 +218,20 @@ function SignedInScreen({ session }) {
         </div>
       </header>
       <main className="app-main">
-        <h1>환영합니다!</h1>
-        <p>로그인이 완료되었습니다. 맛집 기록 기능은 다음 단계에서 제공됩니다.</p>
+        <div className="restaurant-page-heading">
+          <h1>내 맛집 기록</h1>
+          <p>기억나는 맛집 이름부터 저장해 보세요.</p>
+        </div>
+        <RestaurantForm creating={creating} onCreate={handleCreate} />
+        <RestaurantList
+          restaurants={restaurants}
+          loading={restaurantsLoading}
+          errorMessage={restaurantError}
+          onRetry={loadRestaurants}
+          pendingMutations={pendingMutations}
+          onUpdate={handleUpdate}
+          onDelete={handleDelete}
+        />
         {errorMessage && (
           <p className="auth-message error" role="alert">
             {errorMessage}
@@ -137,7 +281,7 @@ function App() {
       </main>
     )
   }
-  return <SignedInScreen session={session} />
+  return <SignedInScreen key={session.user.id} session={session} />
 }
 
 export default App

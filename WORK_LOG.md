@@ -4,6 +4,217 @@
 
 ---
 
+## 2026-07-18 — Gini — T-106 final acceptance and Restaurant CRUD GitHub checkpoint
+
+### Goal
+
+Hank narrow re-review `Approve`와 Owner 수동 검증 통과를 반영해 T-106을 `DONE`으로 종료하고, T-105·T-106 Restaurant CRUD를 하나의 GitHub checkpoint로 commit/push합니다. T-107은 시작하지 않습니다.
+
+### Acceptance evidence
+
+Owner manual verification:
+
+1. 편집 form 진입
+2. 취소 시 원본 유지
+3. 빈 이름 validation
+4. 실제 UPDATE 및 수정 시각 갱신
+5. 새로고침 후 UPDATE persistence
+6. 원래 이름 복구
+7. 별도 임시 row 생성
+8. 삭제 확인 및 cascade 경고
+9. 삭제 취소 시 row 유지
+10. 임시 row만 DELETE
+11. 새로고침 후 DELETE persistence
+12. 다른 row 영향 없음
+13. 편집 중 중복 `수정` trigger 제거 확인
+
+Reviewer:
+
+- Hank initial T-106 verdict: `Approve with changes`
+- Low UI finding corrected (hide Edit trigger while editing)
+- Hank narrow re-review final verdict: `Approve`
+
+### Work performed
+
+1. `TASK_BOARD.md` T-106 → `DONE`; T-107 remains `BACKLOG`
+2. Collaboration records updated; `hank-chat.md` / `toby-chat.md` preserved
+3. Approved checkpoint commit `feat: complete restaurant CRUD` and `git push origin main`
+4. T-107 Visit editor, DB mutation, test data, Vercel not started
+
+### Validation reused / rechecked
+
+- Prior lint/build/dev smoke for T-105·T-106 accepted as already passed
+- `git diff --check`, staged file/secret scan, `.env.local` ignore, migration/package unchanged rechecked at commit time
+
+### Next action
+
+Next Primary Implementer is Hank for T-107 Visit editor. Gini does not start T-107.
+
+— Gini
+
+---
+
+## 2026-07-18 — Gini — T-106 Hank Low finding correction
+
+### Goal
+
+Hank `Approve with changes`의 Low finding 1건만 수정합니다. T-106은 `REVIEW` 유지.
+
+### Work performed
+
+1. `RestaurantList.jsx`에서 `editingId === restaurant.id`인 카드의 `수정` trigger를 숨깁니다. 편집 중에는 inline form의 `저장`/`취소`만 사용합니다.
+2. 편집 중 `삭제`는 기존처럼 편집 state를 정리하고 삭제 확인으로 전환합니다. 다른 row의 `수정` 시작, service/guard/CSS는 변경하지 않았습니다.
+
+### Files changed
+
+- `src/components/restaurants/RestaurantList.jsx`
+- `WORK_LOG.md`, `docs/chat/gini-chat.md`
+
+### Validation
+
+- IDE diagnostics: none
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass
+- `git diff --check`: pass
+- DB row, migration, package, secret: unchanged
+
+— Gini
+
+---
+
+## 2026-07-18 — Gini — T-106 Restaurant Update/Delete
+
+### Goal
+
+로그인한 사용자가 자신의 식당 이름을 수정하고, 확인 후 자신의 식당을 삭제할 수 있게 합니다. Primary Implementer는 Gini, reviewer는 Hank입니다.
+
+### Work performed
+
+1. `restaurantService`에 `user_id`와 restaurant `id`를 함께 필터하는 UPDATE/DELETE를 추가했습니다. update는 service 내부 trim/blank invariant를 적용하고 반환 행으로 목록을 갱신합니다.
+2. 카드별 inline edit/save/cancel form과 이름 validation, delete confirmation/cancel/confirm을 구현했습니다. delete confirmation은 식당명과 연관 기록 cascade 경고를 표시하며, cancel은 service를 호출하지 않습니다.
+3. 각 restaurant id별 pending state와 request id를 사용해 row 간 mutation state를 분리했습니다. T-105 user-keyed remount/mount guard를 유지해 logout, user switch, unmount, stale completion이 state를 변경하지 못하게 했습니다.
+4. 적용된 FK cascade와 RLS를 그대로 사용했습니다. visit/menu, migration/schema/RLS, package, test data/account, Supabase CLI/remote DB, T-107+ 기능은 변경하지 않았습니다.
+
+### Files changed
+
+- `src/App.jsx`
+- `src/App.css`
+- `src/components/restaurants/RestaurantList.jsx`
+- `src/services/restaurantService.js`
+- `TASK_BOARD.md`, `WORK_LOG.md`, `docs/chat/gini-chat.md`
+
+### Validation
+
+- IDE diagnostics: no errors
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- Existing dev server smoke: `http://localhost:5173/` HTTP 200
+- `git diff --check`: pass
+- No Agent-created/updated/deleted restaurant row; Owner must use the existing `산방밀면` row for browser verification.
+
+### Next action
+
+T-106 remains `REVIEW`. Hank reviews owner-scoped mutation construction, stale-result guards, validation/confirmation/accessibility, and T-107+ non-regression. Owner manually verifies edit save/cancel and delete cancel/confirm.
+
+— Gini
+
+---
+
+## 2026-07-18 — Gini — T-105 closeout / T-106 start
+
+### T-105 closeout
+
+- Hank narrow re-review final verdict: `Approve`.
+- Owner manual verification passed: name-only create, immediate list update, and refresh persistence.
+- T-105 is `DONE`. No additional T-105 source refactor was made.
+
+### T-106 plan
+
+- Primary Implementer: Gini. Reviewer: Hank.
+- Add current-owner-scoped name update and confirmation-based delete, with service-level trim/blank validation, per-row mutation state, and existing user lifecycle guards.
+- Preserve applied FK cascade behavior; do not create test data or modify migrations, RLS, packages, Auth, visit/menu, or T-107+ features.
+
+— Gini
+
+---
+
+## 2026-07-18 — Gini — T-105 Hank review corrections
+
+### Goal
+
+Hank `Approve with changes`의 T-105 finding 두 건만 수정합니다. T-105는 `REVIEW`를 유지합니다.
+
+### Work performed
+
+1. Medium: authenticated restaurant screen을 `session.user.id` key로 lifecycle 분리해 사용자 전환 시 목록·query error가 즉시 초기화되고 loading 상태에서 새 목록을 조회하게 했습니다. SELECT에는 mount flag와 monotonic request id guard를 적용해 이전/더 오래된 요청이 state를 갱신하지 못하게 했습니다. INSERT에도 mount/request guard를 적용해 logout, user switch, unmount 후 결과를 반영하지 않습니다.
+2. Low: `createRestaurant()`에서 전달된 이름을 다시 trim하고, 빈 값이면 Supabase INSERT 없이 `{ restaurant: null, error: '맛집 이름을 입력해 주세요.' }`를 반환하도록 service invariant를 추가했습니다. 실제 INSERT는 정규화된 이름만 사용합니다.
+
+### Files changed
+
+- `src/App.jsx`
+- `src/services/restaurantService.js`
+- `WORK_LOG.md`
+- `docs/chat/gini-chat.md`
+
+### Validation
+
+- IDE diagnostics: no errors
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- `git diff --check`: pass
+- `.env.local`, migrations 001·002·003, Supabase/remote DB, package, test account/data: unchanged
+
+### Next action
+
+자동 검증 후 Hank에게 두 finding에 대한 narrow re-review를 요청합니다. Owner DB 수동 검증 및 T-106은 시작하지 않습니다.
+
+— Gini
+
+---
+
+## 2026-07-18 — Gini — T-105 Restaurant Read/Create
+
+### Goal
+
+로그인한 사용자가 자신의 맛집 목록을 보고 `display_name`만으로 새 맛집을 저장할 수 있게 합니다. Primary Implementer는 Gini, reviewer는 Hank입니다.
+
+### Work performed
+
+1. 인증 후 임시 환영 화면을 목록과 quick-create 화면으로 교체했습니다.
+2. `restaurantService`에 현재 session 사용자 id로 필터한 `user_restaurants` SELECT와 `user_id`·trimmed `display_name`만 전송하는 INSERT를 추가했습니다. `place_id`는 nullable이므로 name-only create에서 전송하지 않습니다.
+3. 적용된 `user_restaurants` owner SELECT/INSERT RLS policy를 그대로 사용했습니다. 원시 DB 오류는 화면에 노출하지 않고 안전한 한국어 메시지로 변환합니다.
+4. loading, empty, query error/retry 상태와 blank-name validation, pending submit disable, 성공 행의 즉시 목록 반영을 구현했습니다.
+5. T-106 edit/delete, visits, menu reviews, search/filter/sort, dashboard, migration/schema/RLS, package, Auth 변경은 수행하지 않았습니다.
+
+### Files changed
+
+- Created: `src/services/restaurantService.js`, `src/components/restaurants/RestaurantForm.jsx`, `src/components/restaurants/RestaurantList.jsx`
+- Updated: `src/App.jsx`, `src/App.css`, `TASK_BOARD.md`, `WORK_LOG.md`, `docs/chat/gini-chat.md`
+
+### Validation
+
+- IDE diagnostics: no errors
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- Existing dev server smoke: `http://localhost:5173/` HTTP 200
+- `git diff --check`: pass
+- `.env.local`: still ignored and absent from the diff; no values read or recorded
+- Migrations 001·002·003: unchanged; no Supabase CLI or remote DB command executed
+
+### Findings/risks
+
+- Agent did not create a test account or database row. Owner manual verification is required for actual owner-RLS SELECT/INSERT, name-only persistence, and refresh behavior.
+- `npm` emitted the existing non-blocking `Unknown env config "devdir"` warning and a version-update notice.
+- The authenticated card does not show visit rating/revisit data because visit functionality is T-107 scope.
+
+### Next action
+
+T-105 remains `REVIEW`. Hank reviews the source scope, owner-scoped query/insert, safe errors, accessibility, and T-106+ non-regression. Owner then manually creates one name-only restaurant and verifies immediate list update and refresh persistence.
+
+— Gini
+
+---
+
 ## 2026-07-17 — Gini — T-104 final acceptance and GitHub checkpoint
 
 ### Goal

@@ -1,96 +1,115 @@
 지니, 나는 Toby야.
 
-T-104 코드 checkpoint는 정상 완료됐지만, 새 Agent 인계를 위해 첨부 문서를 대조한 결과 일부 문구가 commit/push 이전 상태로 남아 있습니다. 코드나 DB는 건드리지 말고 문서 정합성만 바로잡아줘.
+Hank의 T-105 narrow re-review 최종 판정 `Approve`를 확인했다. Owner 수동 검증도 모두 통과했으므로 T-105를 `DONE`으로 종료하고 T-106 Restaurant Update/Delete 시작을 승인한다.
 
-## Preflight
+## 먼저 T-105 종료 기록
 
-먼저 다음을 확인해.
+* `TASK_BOARD.md`: T-105 → `DONE`
+* `WORK_LOG.md`: Owner 수동 검증과 Hank 최종 Approve 기록
+* `docs/chat/gini-chat.md`: 두 finding 수정 및 최종 승인 기록
+* 기존 `docs/chat/hank-chat.md`, `docs/chat/toby-chat.md` 변경을 덮어쓰거나 되돌리지 마.
 
-* 현재 branch: `main`
-* 현재 HEAD: `91f7b5d0047b5f716c85822682cbbcc2a0fc6582`
-* local main = origin/main
-* working tree clean
+T-105 source를 추가 refactor하지 마.
 
-하나라도 다르면 수정하지 말고 보고 후 멈춰.
+## T-106 범위
 
-## 문서 정합성 수정
+로그인한 사용자가 자신의 식당 이름을 수정하고 자신의 식당을 삭제할 수 있게 구현해.
 
-다음 파일만 필요한 최소 범위로 수정해.
+### Update
 
-### `TOBY_HANDOFF_20260717.md`
+* 각 식당 카드에 명확한 `수정` 동작 제공
+* 기존 이름을 편집 form에 표시
+* 저장과 취소 제공
+* 이름 trim 및 빈값 validation
+* service layer에서도 trim/빈값 invariant 보장
+* 현재 session user id와 restaurant id를 모두 사용해 owner-scoped UPDATE
+* 수정 중 중복 제출 방지
+* 성공 후 해당 local 목록 항목을 반환 row로 갱신
+* `updated_at` 및 목록 정렬이 기존 정책과 일관되게 반영
+* 안전한 오류 표시, raw Supabase error 미노출
 
-* Auth checkpoint commit 전체 hash
-  `91f7b5d0047b5f716c85822682cbbcc2a0fc6582`
-  와 message를 기록해.
-* 이 checkpoint가 `origin/main`에 push 완료됐다는 사실을 기록해.
-* T-105 미시작 및 별도 승인 대기 상태는 유지해.
-* 이 문서 정리 commit 자체의 아직 알 수 없는 hash를 미리 쓰지는 마.
+### Delete
 
-### `WORK_LOG.md`
+* 각 식당 카드에 명확한 `삭제` 동작 제공
+* 실제 DELETE 전에 사용자 확인 절차 제공
+* 취소하면 DB 요청과 local 변경이 없어야 함
+* 현재 session user id와 restaurant id를 모두 사용해 owner-scoped DELETE
+* 삭제 중 중복 요청 방지
+* 성공 후 해당 식당을 local 목록에서 제거
+* 마지막 식당 삭제 시 기존 empty state로 복귀
+* 안전한 오류 표시, raw error 미노출
 
-최신 T-104 checkpoint 항목을 “준비” 상태가 아니라 실제 완료 결과로 정리해.
+### 비동기·사용자 전환 안전성
 
-* lint/build/diff-check 통과
-* secret 및 `.env.local` 제외 확인
-* commit hash와 message
-* `origin/main` push 성공
-* local/remote 동기화
-* working tree clean
-* T-105 미시작
+T-105에서 적용한 사용자 remount/request guard 원칙을 유지해.
 
-### `docs/chat/gini-chat.md`
+* logout, 사용자 변경, unmount 후 늦은 UPDATE/DELETE 결과가 새 사용자 화면을 변경하지 않게 처리
+* 한 row의 mutation 상태가 다른 row를 잘못 변경하지 않게 처리
+* 정상 update/delete 결과는 정확한 row에만 반영
 
-최신 T-104 항목의 checkpoint를 “검사 후 예정”이 아니라 다음 실제 결과로 갱신해.
+## 기존 DB 동작
 
-* commit `91f7b5d0047b5f716c85822682cbbcc2a0fc6582`
-* push 완료
-* local main = origin/main
-* working tree clean
+식당 삭제의 child cascade는 이미 승인·적용된 FK migration 동작을 사용한다. migration, constraint, RLS를 수정하거나 cascade를 application code로 재구현하지 마.
 
-### `TASK_BOARD.md`
+T-106에서는 visit/menu UI를 만들지 않는다.
 
-* `Immediate next action`에서 T-104 checkpoint 생성 대기 문구를 제거하고, checkpoint 완료 및 T-105 승인 대기로 수정해.
-* T-102와 T-103의 `Recently completed` 기록은 당시 task 종료 시 SQL이 미실행이었다는 역사적 사실을 보존하되, migration 001·002가 이후 2026-07-17 Owner 승인으로 remote에 적용됐다는 현재 상태를 짧게 덧붙여 오해를 방지해.
-* T-104 DONE과 T-105 BACKLOG는 유지해.
+## UI·접근성
 
-### `DECISION_LOG.md`
+* 기존 plain CSS 유지
+* button type 명시
+* 입력 label 제공
+* keyboard Tab/Enter 기본 동작 유지
+* focus-visible 유지
+* destructive delete와 일반 edit action을 시각적으로 구분
+* mobile에서 버튼과 입력이 화면 밖으로 밀리지 않도록 기존 구조 안에서 최소 대응
 
-* D-015에 Auth checkpoint commit hash와 push 완료 결과를 최소한으로 보강해.
-* 새 decision을 만들 필요는 없어.
+## 범위 밖
 
-## 금지 범위
+* T-107 visit
+* T-108 menu review
+* search/filter/sort/dashboard
+* 새 package
+* migration/schema/RLS 변경
+* Supabase CLI 또는 remote 관리 명령
+* Agent의 test row/account 생성·수정·삭제
+* Git commit/push
+* Vercel
 
-* source code, CSS, package files, migration, Supabase config 수정 금지
-* DB/Supabase/Auth/test account 작업 금지
-* T-105 시작 금지
-* lint/build/npm audit 재실행 금지
-* reset, rebase, amend, force push 금지
+Owner의 기존 `산방밀면` row는 Agent가 수정하거나 삭제하지 마.
 
-## 검증과 Git
+## 기록
 
-수정 후 다음만 확인해.
+* T-106만 `IN_PROGRESS`로 변경
+* 짧은 구현 계획 기록
+* 구현 후 `TASK_BOARD.md`, `WORK_LOG.md`, `docs/chat/gini-chat.md` 갱신
+* T-105 종료 근거와 T-106 구현 근거를 구분해서 기록
+* 협업 제출 증거가 되도록 Primary/Reviewer, 주요 owner-scope 판단, 검증 결과를 간결하게 남김
 
-* 변경 파일이 위 Markdown 5개뿐인지 확인
+## 자동 검증
+
+* IDE/static diagnostics
+* `npm.cmd run lint`
+* `npm.cmd run build`
+* dev smoke
 * `git diff --check`
-* `.env.local` 또는 secret이 diff/stage에 없는지 확인
-* 문서 사이의 T-104 상태, migration 적용 상태, commit hash가 일치하는지 확인
+* `.env.local`·secret 미포함
+* migration 001·002·003 무변경
+* package 변경 없음 확인
 
-검증이 통과하면 이 문서 정합성 수정에 한해 commit과 `origin/main` push를 승인한다.
+Agent가 실제 row mutation을 수행하지 마.
 
-Commit message:
+완료 후 T-106을 `REVIEW`로 변경하고 다음을 보고한 뒤 멈춰.
 
-`docs: finalize T-104 checkpoint handoff`
+1. T-105 DONE 기록 결과
+2. update/delete 구현 내용
+3. Supabase owner-scoped UPDATE/DELETE 방식
+4. 사용자 전환 및 stale mutation 차단 방식
+5. 생성·수정 파일
+6. 자동 검증 결과
+7. Owner 최소 수동 테스트 순서
+8. Hank review 요청 범위
+9. warning·blocker
 
-일반 commit 후 `git push origin main`을 실행해. 완료 후 다음을 보고하고 멈춰.
-
-* 수정 파일
-* 정정한 불일치
-* 새 commit 전체 hash
-* push 결과
-* local main = origin/main 여부
-* working tree clean 여부
-* warning/blocker
-
-T-105는 시작하지 마.
+T-107은 시작하지 마.
 
 — Toby

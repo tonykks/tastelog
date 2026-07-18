@@ -2,6 +2,180 @@
 
 ## Gini → Owner, Toby, Hank, Any
 
+- Date: 2026-07-18
+- Related: T-106 final acceptance / Restaurant CRUD GitHub checkpoint
+- Status: **T-105·T-106 DONE — checkpoint commit/push approved**
+- Primary (T-105·T-106): Gini · Reviewer: Hank
+- Next Primary: Hank (T-107 Visit editor)
+
+### T-106 closeout
+
+- Hank narrow re-review final verdict: `Approve` (after Low edit-trigger fix).
+- Owner manual verification passed for edit enter/cancel/blank validation/UPDATE+updated_at/refresh persistence/name restore, temp-row create, delete confirm+cascade warning/cancel keep/temp-row delete only/refresh persistence/no other-row impact, and edit-mode Edit-trigger removal.
+- `TASK_BOARD.md` T-106 → `DONE`; T-107 remains `BACKLOG`.
+- Existing `docs/chat/hank-chat.md` and `docs/chat/toby-chat.md` preserved.
+
+### Checkpoint
+
+- Message: `feat: complete restaurant CRUD`
+- Includes T-105·T-106 source (`restaurantService`, restaurant components, `App.jsx`/`App.css`) and collaboration docs.
+- Excludes `.env.local`, `dist/`, `node_modules/`, secrets; migrations 001·002·003 and package files unchanged.
+- Push target: `origin/main`. No force/amend/reset/rebase. T-107 not started.
+
+### Handoff
+
+- Hank: start T-107 Visit editor when Owner/Toby assign. Restaurant CRUD is complete and on `main` after this checkpoint.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-106 Hank Low finding correction
+- Status: **REVIEW — Low finding fixed; awaiting Hank narrow re-review**
+- Primary: Gini · Reviewer: Hank
+
+### Hank finding accepted
+
+- Low: while a row is in edit mode (`editingId === restaurant.id`), hide that card’s `수정` trigger so an unsaved name cannot be silently reset by re-clicking Edit.
+
+### Fix
+
+- In `RestaurantList.jsx`, render the `수정` button only when `editingId !== restaurant.id`.
+- Edit mode still uses only the inline form `저장`/`취소`.
+- Delete during edit still clears edit state and opens confirmation (unchanged).
+- Other rows’ Edit triggers, UPDATE/DELETE services, request guards, and CSS were not changed.
+- T-106 remains `REVIEW`; T-107 not started; no DB/migration/package/secret changes.
+
+### Verification
+
+- IDE diagnostics: none
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass
+- `git diff --check`: pass
+- `.env.local` ignored; migrations 001·002·003 / package / DB row: unchanged
+
+### Requested action
+
+- Hank: narrow re-review of this single UI collision fix.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-105 closeout / T-106 Restaurant Update/Delete
+- Status: **T-105 DONE; T-106 REVIEW — implementation and automated checks complete**
+- Primary: Gini · Reviewer: Hank
+
+### 1. T-105 DONE 기록
+
+- Hank narrow re-review final verdict: `Approve`.
+- Owner manual verification passed: name-only create, immediate list update, refresh persistence.
+- `TASK_BOARD.md` T-105 → `DONE`. T-105 source was not refactored further.
+- Existing `docs/chat/hank-chat.md` / `docs/chat/toby-chat.md` changes were preserved (not overwritten).
+
+### 2. T-106 update/delete 구현
+
+- Update: each card has `수정` → labeled inline edit form with current name, `저장`/`취소`, form + service trim/blank validation, pending disable, success replaces that list row and re-sorts by `updated_at`.
+- Delete: each card has visually distinct `삭제` → confirmation naming the restaurant and warning about related-record cascade; `취소` makes no DB/local change; confirm removes the row; last-row delete returns to empty state.
+
+### 3. Owner-scoped Supabase UPDATE/DELETE
+
+- `updateRestaurant({ userId, restaurantId, displayName })`: service trim/blank; `update` filtered by both `id` and `user_id`; returns selected columns via `.maybeSingle()`.
+- `deleteRestaurant({ userId, restaurantId })`: `delete` filtered by both `id` and `user_id`; returns deleted `id`.
+- Applied RLS + FK cascade unchanged; no migration/schema/RLS edits; visit/menu UI not added.
+
+### 4. Stale mutation / user-switch safety
+
+- `SignedInScreen key={session.user.id}` remount on user change.
+- Mount flag + list/create request ids retained from T-105.
+- Per-restaurant mutation request ids + pending map: late UPDATE/DELETE after logout, user switch, unmount, or a newer same-row mutation cannot update state; one row’s pending state cannot mutate another row.
+
+### 5. Files
+
+- Updated: `src/App.jsx`, `src/App.css`, `src/components/restaurants/RestaurantList.jsx`, `src/services/restaurantService.js`
+- Records: `TASK_BOARD.md`, `WORK_LOG.md`, `docs/chat/gini-chat.md`
+
+### 6. Automated verification (rechecked)
+
+- IDE diagnostics: none
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass (Vite 8.1.4)
+- Dev smoke: `http://localhost:5173/` HTTP 200
+- `git diff --check`: pass
+- `.env.local` ignored / not in diff; migrations 001·002·003 unchanged; no package change; Agent made no DB row mutation
+
+### 7. Owner 최소 수동 테스트 (기존 `산방밀면` 사용; Agent는 변경하지 않음)
+
+1. 로그인 → 목록에 `산방밀면` 확인
+2. 수정 → 이름 변경 → 저장 → 즉시 반영 + 새로고침 유지
+3. 수정 → 취소 → 변경 없음
+4. 빈 이름 저장 시도 → validation
+5. 삭제 → 취소 → 행 유지
+6. 삭제 → 삭제 확인 → 목록에서 제거 (마지막이면 empty state)
+7. 로그아웃 유지
+
+### 8. Hank review 요청 범위
+
+- owner-scoped UPDATE/DELETE filters (`user_id` + `id`)
+- service trim/blank invariant
+- confirmation cancel vs confirm behavior
+- per-row pending + stale-result guards
+- labels / focus-visible / destructive vs edit distinction
+- T-107+ (visit/menu/search) 미침범
+
+### 9. warning·blocker
+
+- Blocker 없음.
+- npm `Unknown env config "devdir"` non-blocking.
+- Git LF→CRLF notice on existing `docs/chat/hank-chat.md` (not edited by Gini).
+- Actual edit/delete persistence requires Owner browser verification.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-105 Restaurant Read/Create
+- Status: **REVIEW — implementation and automated checks complete**
+
+### Implementation plan
+
+- Replace the authenticated temporary welcome screen with an owner-scoped restaurant list and quick-create form.
+- Keep Supabase queries in `restaurantService`; read/insert `user_restaurants` using the signed-in session user's `id`, relying on the applied owner RLS policies.
+- Implement name-only create with trim/blank validation, disabled pending submission, list refresh after success, and loading/empty/safe-error states.
+- Do not change migrations, schema/RLS, packages, Auth, test data/accounts, or T-106+ features. Validate only with static checks, lint/build, and the existing dev server; Owner performs the actual browser DB create check.
+
+### Reviewer handoff
+
+- Hank: review T-105 source scope, owner-scoped read/insert construction, safe errors, accessibility, and absence of T-106+ behavior after implementation.
+
+### Result
+
+- `restaurantService` lists `user_restaurants` with `user_id = session.user.id`, newest `updated_at` first; it inserts only `user_id` and trimmed `display_name`, so nullable `place_id` is not required. Applied owner RLS remains the access boundary.
+- The authenticated screen now provides loading, empty, safe query-error/retry states and a labeled quick-create form that blocks blank and pending duplicate submissions. A successful insert prepends the returned row without manual refresh.
+- `npm.cmd run lint`, `npm.cmd run build`, `git diff --check`, and `http://localhost:5173/` smoke (HTTP 200) passed; IDE diagnostics are clear. `.env.local` remains ignored and migrations 001·002·003 are unchanged.
+- Owner must manually verify a name-only create, immediate list update, and refresh persistence. No Agent-created test account or database row exists.
+
+### Hank correction result
+
+- Accepted Medium finding: keyed authenticated screen resets prior-user list/error state on a user-id change; mount and request-id guards reject stale SELECT and INSERT completions.
+- Accepted Low finding: `createRestaurant()` trims internally and returns `{ restaurant: null, error: '맛집 이름을 입력해 주세요.' }` before any INSERT for a blank normalized value.
+- Diagnostics, lint, build, and diff checks pass after the two-file source correction. Request Hank narrow re-review; no migration, DB, package, T-106+, or test-data change is included.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
 - Date: 2026-07-17
 - Related: T-104 final acceptance / D-015 checkpoint
 - Status: **T-104 DONE — Owner manual test passed; Hank final Approve**

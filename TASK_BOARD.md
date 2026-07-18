@@ -4,7 +4,7 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 ## Current priority
 
-- Phase: T-104 DONE — Auth Owner manual verification passed; Hank narrow re-review `Approve`; await T-105 approval
+- Phase: T-105·T-106 DONE — Restaurant CRUD checkpoint approved for GitHub push; next Primary Implementer Hank starts T-107 Visit editor
 - Milestone: M1 foundation → M2 secure CRUD → M3 UX → M4 deploy/submit
 - Primary goal: 2026-07-18까지 배포 가능한 과제 1단계 완성
 
@@ -23,8 +23,8 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 | T-102 | Supabase schema·constraints·indexes migration 작성 | DONE | Hank | Any | 5 tables/관계/검증 조건, 재현 가능한 SQL | SQL 실행 Yes |
 | T-103 | RLS policy·security test plan | DONE | Hank | Any | 3 owner tables CRUD policies, cross-user 차단 계획 | SQL 실행 Yes |
 | T-104 | Supabase client + Auth | DONE | Gini | Hank | sign-up/login/logout/session/error | Yes if project mutation |
-| T-105 | Restaurant Read/Create | BACKLOG | Gini | Hank | own list states, name-only create | No |
-| T-106 | Restaurant Update/Delete | BACKLOG | Gini | Hank | edit, validation, confirm/cascade behavior | No |
+| T-105 | Restaurant Read/Create | DONE | Gini | Hank | own list states, name-only create | No |
+| T-106 | Restaurant Update/Delete | DONE | Gini | Hank | edit, validation, confirm/cascade behavior | No |
 | T-107 | Visit editor | BACKLOG | Hank | Gini | visited fields/rating/revisit; unvisited nullable | No |
 | T-108 | Menu review CRUD | BACKLOG | Hank | Gini | multiple menus, price/rating validation | No |
 | T-109 | Search/filter/rating sort/dashboard | BACKLOG | Gini | Hank | keyword, status/revisit, ranking, summary | No |
@@ -36,9 +36,9 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 ## Immediate next action
 
-1. T-104 checkpoint 완료: commit `91f7b5d0047b5f716c85822682cbbcc2a0fc6582`가 `origin/main`에 push됨. 새 Agent는 `TOBY_HANDOFF_20260717.md`부터 읽습니다.
-2. 다음 task는 T-105 Restaurant Read/Create이지만 Owner/Toby의 별도 승인 전 시작하지 않습니다.
-3. T-100~T-104를 재수행하거나 applied migration을 수정하지 않습니다.
+1. T-105·T-106 Restaurant CRUD checkpoint commit `feat: complete restaurant CRUD`를 `origin/main`에 push한 뒤 Hank가 T-107 Visit editor를 시작합니다.
+2. T-105·T-106은 Owner 수동 검증과 Hank final `Approve` 근거로 DONE입니다. T-107은 BACKLOG이며 자동 시작하지 않습니다.
+3. Applied migration 001·002·003과 Auth checkpoint를 재수행하거나 수정하지 않습니다.
 
 ## Known blockers / Owner inputs
 
@@ -55,6 +55,8 @@ Status: `BACKLOG` · `READY` · `IN_PROGRESS` · `REVIEW` · `BLOCKED` · `DONE`
 
 | ID | Result | By | Verified | Date |
 |---|---|---|---|---|
+| T-106 | Restaurant Update/Delete DONE: edit/cancel/validation/update persistence, delete confirm/cancel/cascade warning, Low edit-trigger fix; Hank final Approve | Gini | Owner + Hank | 2026-07-18 |
+| T-105 | Restaurant Read/Create DONE: own list states, name-only create, refresh persistence, stale-request guards; Hank final Approve | Gini | Owner + Hank | 2026-07-18 |
 | T-104 | Supabase client/Auth DONE: signup+email confirm+login/logout+refresh session+safe login error verified; Hank final Approve | Gini | Owner + Hank | 2026-07-17 |
 | T-103 | RLS policy migration DONE: Any final Approve (no added findings); Owner/Toby closed; SQL not executed at closeout (2026-07-17 Owner 승인으로 remote 적용됨) | Hank | Any + Owner/Toby | 2026-07-15 |
 | T-102 | Initial schema migration DONE: Any final Approve (findings 0); Owner/Toby closed; SQL not executed at closeout (2026-07-17 Owner 승인으로 remote 적용됨) | Hank | Any + Owner/Toby | 2026-07-15 |
