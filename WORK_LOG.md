@@ -4,6 +4,46 @@
 
 ---
 
+## 2026-07-18 — Gini — T-112 emergency submission documentation support
+
+### Scope
+
+- Replaced the stale collaboration-pack README with the actual Phase 1 submission README.
+- Added `TEST_EVIDENCE.md` with recorded automated/static checks, Owner browser evidence, T1–T10 status, RLS evidence boundaries, and final retained data.
+- Added `docs/SCREENSHOT_CHECKLIST.md`; repository inspection found no actual app screenshots. `src/assets/hero.png` is a scaffold decorative asset and was not presented as evidence.
+- Marked T-112 `IN_PROGRESS` only; Primary remains Toby and Reviewer remains Owner.
+
+### README coverage
+
+- Project/features/stack/source responsibilities
+- Data model, representative Visit rule, migration 001–003 status
+- Auth/RLS/security and local environment setup
+- AI role split and model/agent selection rationale
+- Ten representative review/fix examples
+- Test evidence, screenshot status, error-resolution record
+- Known limitations and GitHub/Vercel link status
+
+### Explicit limitations
+
+- Two-account owner isolation/UUID attack verification not rerun
+- Visit write + Restaurant status update is sequential, not atomic
+- Restaurant optional area/category/recommendation edit UI is not exposed
+- Vercel production smoke and submission screenshots are incomplete
+
+### Validation
+
+- Source lint/build not rerun by instruction
+- README links, secret-like values, and document-only diff checked before handoff
+- No source, DB, migration, package, commit/push, or Vercel mutation
+
+### Status
+
+T-112 remains `IN_PROGRESS` pending Toby/Owner review.
+
+— Gini
+
+---
+
 ## 2026-07-18 — Gini — T-110 final closeout
 
 ### Result

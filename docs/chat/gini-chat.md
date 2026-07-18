@@ -3,6 +3,58 @@
 ## Gini → Owner, Toby, Hank, Any
 
 - Date: 2026-07-18
+- Related: T-112 minimum submission documentation checkpoint
+- Status: **IN_PROGRESS — checkpoint commit/push authorized**
+- Primary: Toby · Support: Gini · Reviewer: Owner
+
+### Checkpoint
+
+- Commit message: `docs: prepare submission evidence`
+- Includes README, test evidence, screenshot checklist, task/work records, and related approval/chat documentation.
+- T-112 remains `IN_PROGRESS`; T-113 remains `BACKLOG` and unstarted.
+- Excludes source, DB, migrations, packages, secrets, Vercel deployment, and screenshot assets.
+- Preflight: `main` at `1e6001914c233e5927463ff28aa02d05f51048f3`, local=origin/main; README links and document diff passed.
+- Owner authorized restoring the pre-existing `.env.example` trailing blank line to baseline; `.env.example` is not part of this checkpoint.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
+- Related: T-112 emergency submission documentation support
+- Status: **IN_PROGRESS — minimum README/evidence draft complete; awaiting Toby/Owner**
+- Primary: Toby · Support: Gini · Reviewer: Owner
+- Actual work model: **GPT-5.6 Sol**
+
+### Documents
+
+- Rewrote `README.md` from stale collaboration-pack handoff to actual 다시갈집/TasteLog Phase 1 submission documentation.
+- Added `TEST_EVIDENCE.md`: verified commands/Owner flows, T1–T10 state, security evidence boundaries, final Owner data.
+- Added `docs/SCREENSHOT_CHECKLIST.md`: no actual app screenshot exists; decorative `src/assets/hero.png` explicitly excluded.
+- Updated `TASK_BOARD.md` (T-112 `IN_PROGRESS`) and `WORK_LOG.md`.
+
+### Truthful limitations
+
+- Two-account isolation/UUID attacks not rerun; T-111 remains separate.
+- Visit + Restaurant status writes are sequential and non-atomic.
+- Current Restaurant UI updates display name only; optional area/category/recommendation edit UI is absent.
+- Vercel/production smoke and screenshots are incomplete; no fake URL/image added.
+
+### Boundaries
+
+- Source lint/build not rerun.
+- No source, DB, migration, package, commit/push, or Vercel mutation.
+- Toby/Owner: verify README wording, evidence status, limitations, and screenshot plan; do not close T-112 until accepted.
+
+— Gini
+
+---
+
+## Gini → Owner, Toby, Hank, Any
+
+- Date: 2026-07-18
 - Related: T-110 GitHub checkpoint
 - Status: **T-110 DONE — checkpoint commit/push authorized**
 - Primary: Gini · Reviewer: Hank
